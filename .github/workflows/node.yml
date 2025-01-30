@@ -1,0 +1,34 @@
+name: Node.js CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'  # You can adjust the version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test  # Or use your own test command
+
+      - name: Lint code
+        run: npm run lint  # If you have a linting command
+
+      - name: Build app
+        run: npm run build  # Build if you have a front-end build process
