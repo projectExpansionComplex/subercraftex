@@ -7,9 +7,9 @@ const connectDB = async () => {
 
     });
 
-    console.log("pesEcommers MongoDB Connection Success 👍");
+    console.log("SUBER-Craftex MongoDB Connection Success 👍");
   } catch (error) {
-    console.log("pesEcommers MongoDB Connection Failed 💥");
+    console.log("SUBER-Craftex MongoDB Connection Failed 💥");
     process.exit(1);
   }
 };
