@@ -1,7 +1,7 @@
 const Users = require('../models/userModel')
 const ResetToken = require('../models/resetTokenModel')
 const ErrorResponse = require('../utils/errorResponse')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
 
