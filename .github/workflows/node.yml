@@ -36,8 +36,8 @@ jobs:
 
     - name: Build Docker images
       run: |
-        docker build -t my-backend ./backend
-        docker build -t my-frontend ./frontend
+        docker build -t my-backend -f docker/Dockerfile.backend ./backend
+        docker build -t my-frontend -f docker/Dockerfile.frontend ./frontend
 
     - name: Run Tests (Backend)
       run: |
