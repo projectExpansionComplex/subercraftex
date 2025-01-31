@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcrypt')
+
 
 const ResetToken2Schema = new mongoose.Schema({
   owner:{

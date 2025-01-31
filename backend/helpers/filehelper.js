@@ -1,6 +1,7 @@
 const multer = require("multer");
-const sharp = require("sharp");
 const ErrorResponse = require("../utils/errorResponse");
+const Jimp = require('jimp');
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -55,7 +56,7 @@ exports.resizeUserPhoto = (req, res, next) => {
     if (!req.file) return next();
   
     req.file.filename = `user-avatar-${req.user.id}-${Date.now()}.jpeg`;
-    sharp(req.file.buffer)
+    Jimp(req.file.buffer)
       .resize(500, 500)
       .toFormat("jpeg")
       .jpeg({ quality: 90 })
@@ -69,7 +70,7 @@ exports.resizePhoto = (req, res, next) => {
   if (!req.file) return next();
   
   req.file.filename = new Date().toISOString().replace(/:/g, "-") + "-" + req.file.originalname;
-  sharp(req.file.buffer)
+  Jimp(req.file.buffer)
     .resize(500, 500)
     .toFormat("jpeg")
     .jpeg({ quality: 90 })
