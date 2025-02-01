@@ -22,7 +22,7 @@ services:
       - ../backend:/app
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://subercraftex:subercraftexpass@cluster0.2a7nq.mongodb.net # MONGO_URI=mongodb://mongo:27017/pesEcomerceDB 
+      - MONGO_URI=${MONGO_URI} # MONGO_URI=mongodb://mongo:27017/pesEcomerceDB 
      
      
 # mongo db is install locally in docker, taking it out for now
