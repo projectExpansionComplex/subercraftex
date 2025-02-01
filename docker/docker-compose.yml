@@ -22,13 +22,11 @@ services:
       - ../backend:/app
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb://mongo:27017/pesEcomerceDB
-       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
+      - MONGO_URI=mongodb+srv://subercraftex:subercraftexpass@cluster0.2a7nq.mongodb.net # MONGO_URI=mongodb://mongo:27017/pesEcomerceDB 
      
-
-  mongo:
-    image: mongo
-    ports:
-      - "27017:27017"
+     
+# mongo db is install locally in docker, taking it out for now
+ # mongo:
+   # image: mongo
+    #ports:
+     # - "27017:27017"
