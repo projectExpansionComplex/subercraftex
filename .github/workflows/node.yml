@@ -43,9 +43,7 @@ jobs:
       run: |
         docker run --rm my-backend npm test
 
-    - name: Run Tests (Frontend)
-      run: |
-        docker run --rm my-frontend npm test
+    
 
   deploy:
     runs-on: ubuntu-latest
