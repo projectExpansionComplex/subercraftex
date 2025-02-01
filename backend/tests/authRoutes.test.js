@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('../src/server'); // Your main app file
 const User = require('../models/userModel'); // Path to your User model
 const mongoose = require('mongoose');
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const ResetToken = require("../models/resetTokenModel");
 const ResetToken2 = require("../models/resetTokenModel2");
 const crypto = require("crypto");
@@ -21,14 +21,14 @@ describe('Authentication Routes', () => {
   beforeAll(async () => {
     // Connect to your test database
     try {
-      await mongoose.connect('mongodb://localhost:27017/ecommerce-test', {
+      await mongoose.connect('mongodb+srv://subercraftex:subercraftexpass@cluster0.2a7nq.mongodb.net', {
         
   
       });
   
-      console.log("pesEcommers test MongoDB Connection Success 👍");
+      console.log("SuberCraftex test MongoDB Connection Success 👍");
     } catch (error) {
-      console.log("pesEcommers test MongoDB Connection Failed 💥");
+      console.log("SuberCraftex test MongoDB Connection Failed 💥");
       process.exit(1);
     }
   });
