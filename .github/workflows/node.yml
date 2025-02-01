@@ -62,12 +62,12 @@ jobs:
 
     - name: Build and Push Backend Docker Image
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/my-backend:${{ github.sha }} ./backend
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/my-backend:${{ github.sha }} -f docker/Dockerfile.backend ./backend
         docker push ${{ secrets.DOCKER_USERNAME }}/my-backend:${{ github.sha }}
 
     - name: Build and Push Frontend Docker Image
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/my-frontend:${{ github.sha }} ./frontend
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/my-frontend:${{ github.sha }} -f docker/Dockerfile.frontend ./frontend
         docker push ${{ secrets.DOCKER_USERNAME }}/my-frontend:${{ github.sha }}
 
     - name: Deploy to Production
