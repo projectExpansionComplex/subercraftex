@@ -53,9 +53,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Render API Login (Deploy to Render)
-      run: |
-        curl -X POST https://api.render.com/v1/services/srv-cuejn08gph6c73fc2de0/deploys \ -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+    #- name: Render API Login (Deploy to Render)
+    #  run: |
+    #    curl -X POST https://api.render.com/v1/services/srv-cuejn08gph6c73fc2de0/deploys \ -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
 
 
     #- name: Login to DockerHub
