@@ -58,6 +58,10 @@ if(process.env.NODE_ENV==="production"){
 
 }
 
+// Routes
+const comingSoonRoutes = require('../routes/comingSoonRoutes');
+const subscriptionRoutes = require('../routes/subscriptionRoutes');
+const announcementRoutes = require('../routes/announcementRoutes');
 
 //routes
 app.use('/api', require('../routes/authRouter'))
@@ -71,6 +75,10 @@ app.use('/api/wishlist', require('../routes/wishlistRoutes'));
 app.use('/api/coupons', require('../routes/couponRoutes'));
 app.use('/api/inventory', require('../routes/inventoryRoutes'));
 app.use('/api/shipping', require('../routes/shippingRoutes'));
+app.use('/api/coming-soon', comingSoonRoutes);
+app.use('/api/subscribe', subscriptionRoutes);
+app.use('/api/announcements', announcementRoutes);
+
 
 // Use Error Handler
 app.use(globalErrorHandler);
