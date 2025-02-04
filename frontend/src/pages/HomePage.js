@@ -60,13 +60,13 @@ const HomePage = () => {
 
     // Clean up
     return () => clearInterval(interval);
-  }, [comingSoon?.releaseDate]);
+  }, [comingSoon]);
 
   useEffect(() => {
     const getcommingsoon = async () => {
       try {
         const res = await getDataAPI('coming-soon')
-       
+        console.log(res, 'the res data')
         setComingSoon(res.data);
         startCountdown(res.data.launchDate);
       } catch (error) {
