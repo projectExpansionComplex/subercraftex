@@ -62,8 +62,9 @@ describe('Authentication Routes', () => {
 
     it('should not register a user with an existing email', async () => {
       await User.create({
-        fullname:"siysinyuy",
-	        username:"suber",
+        first_name:"mohamad",
+        last_name:"siysinyuy",
+        user_type:"individual",
 	        email:"mohamadsiysinyuy@gmail.com",
 	        password:"msb1@@@@"
       });
@@ -71,14 +72,15 @@ describe('Authentication Routes', () => {
       const res = await request(app)
         .post('/api/users/register')
         .send({
-          fullname:"siysinyuy",
-	        username:"suber",
+          first_name:"mohamad",
+        last_name:"siysinyuy",
+        user_type:"individual",
 	        email:"mohamadsiysinyuy@gmail.com",
 	        password:"msb1@@@@"
         });
 
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('msg', 'This email already exists.');
+      expect(res.statusCode).toEqual(409);
+      expect(res.body).toHaveProperty("message", "User already exists");
     });
 
   });
@@ -90,8 +92,9 @@ describe('Authentication Routes', () => {
       const passwordHash = await bcrypt.hash('msb1@@@@', salt);
 
       await User.create({
-        fullname:"siysinyuy",
-	        username:"suber",
+        user_type:"individual",
+        first_name:"mohamad",
+        last_name:"siysinyuy",
 	        email:"mohamadsiysinyuy@gmail.com",
 	        password:passwordHash
       });
@@ -119,8 +122,8 @@ describe('Authentication Routes', () => {
           password: 'wrongpassword',
         });
 
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('msg', 'Invalid Login credentials');
+      expect(res.statusCode).toEqual(401);
+      expect(res.body).toHaveProperty("message", "Invalid Login credentials", "success", true);
       expect(res.body).toHaveProperty('success', true);
 
     });
@@ -133,7 +136,7 @@ describe('Authentication Routes', () => {
           password: 'msb1@@@@',
         });
 
-      expect(res.statusCode).toEqual(400);
+      expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty('msg', 'Invalid Login credentials');
     });
   });
