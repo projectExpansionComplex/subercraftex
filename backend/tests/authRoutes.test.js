@@ -43,7 +43,7 @@ describe('Authentication Routes', () => {
     await mongoose.connection.close();
   });
 
-  describe('POST /api/register', () => {
+  describe('POST /api/users/register', () => {
     // it('should register a new user', async () => {
     //   const res = await request(app)
     //     .post('/api/register')
@@ -69,7 +69,7 @@ describe('Authentication Routes', () => {
       });
 
       const res = await request(app)
-        .post('/api/register')
+        .post('/api/users/register')
         .send({
           fullname:"siysinyuy",
 	        username:"suber",
@@ -83,7 +83,7 @@ describe('Authentication Routes', () => {
 
   });
 
-  describe('POST /api/login', () => {
+  describe('POST /api/users/login', () => {
     beforeEach(async () => {
       const salt = await bcrypt.genSalt(10);
 
@@ -113,7 +113,7 @@ describe('Authentication Routes', () => {
 
     it('should not log in a user with an incorrect password', async () => {
       const res = await request(app)
-        .post('/api/login')
+        .post('/api/users/login')
         .send({
           email: 'mohamadsiysinyuy@gmail.com',
           password: 'wrongpassword',
@@ -127,7 +127,7 @@ describe('Authentication Routes', () => {
 
     it('should not log in a non-existent user', async () => {
       const res = await request(app)
-        .post('/api/login')
+        .post('/api/users/login')
         .send({
           email: 'nonexistent@example.com',
           password: 'msb1@@@@',
