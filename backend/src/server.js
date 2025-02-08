@@ -1,4 +1,3 @@
-//Winetasting server file
 const express = require('express')
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -8,7 +7,12 @@ const cookieParser = require('cookie-parser')
 const path = require('path')
 const bodyParser = require('body-parser');
 const globalErrorHandler = require('../controllers/errorController');
+const multer = require('multer');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 const app = express();
+
+
 
 // Limit requests from the same IP
 const limiter = rateLimit({
@@ -16,6 +20,24 @@ const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, Please try again late!'
 });
+
+// File upload configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = './storage';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+    }
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, uuidv4() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage: storage });
+
+
+
 app.use('/api', limiter);
 
 app.use(express.json())
@@ -35,15 +57,35 @@ app.use('/uploads', express.static('uploads'));
 
 //on production
 if(process.env.NODE_ENV==="production"){
-  app.use(express.static(path.join(__dirname,'../../frontend/build')))
-  app.get('/register',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','build','index.html'))})
-  app.get('/login',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','build','index.html'))})
-  app.get('/forgotpassword',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','build','index.html'))})
-  app.get('/reset-password',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','build','index.html'))})
-  app.get('/verify',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','build','index.html'))})
-  app.get('/admin',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','build','index.html'))})
-    app.get('/',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','build','index.html'))})
+  app.use(express.static(path.join(__dirname,'../../frontend/dist')))
+  app.get('/',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/explore',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/design/:design_uid',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/designers',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/designer/:designer_uid',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
 
+  app.get('/profile',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/post-project',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/projects',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/project/:project_uid',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/shop',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/cart',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/checkout',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/order-confirmation/:order_uid',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/challenges',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/forums',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/learn',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/events',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/admin',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/category/:category_uid',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/product/:product_uid',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/inspiration',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/custom-request',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/forum/:topic_uid',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/virtual-showroom',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/order-tracking/:order_uid',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  app.get('/sustainability',(req,res)=>{res.sendFile(path.join(__dirname,'../../frontend','dist','index.html'))})
+  
   
   
 

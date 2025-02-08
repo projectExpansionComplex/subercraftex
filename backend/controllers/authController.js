@@ -6,7 +6,7 @@ const nodemailer = require("nodemailer");
 const VerificationToken = require("../models/verificationTokenModel");
 const ResetToken = require("../models/resetTokenModel");
 const ResetToken2 = require("../models/resetTokenModel2");
-
+const { v4: uuidv4 } = require('uuid');
 const crypto = require("crypto");
 
 // check email validity
@@ -242,103 +242,134 @@ const createRandomBytes = () =>
 const authCtrl = {
   register: async (req, res, next) => {
     try {
-      const { fullname, username, email, password, gender } = req.body;
-     
+      // const { fullname, username, email, password, gender } = req.body;
+      const { username, email, password, user_type, first_name, last_name, profile_picture_url, bio, location, specialties, years_experience, portfolio_link, company_name, company_size, industry } = req.body;
+      
+      // Validate inputs (similar to your previous validation logic)
+      if (!email || !password || !first_name || !last_name) {
+        return res.status(409).json({ msg: "Please provide all required fields!" });
+      }
       //check on the username
-      if (!username) {
-        res
-          .status(400)
-          .json({ success: true, msg: "please provide a username" });
-        return next(
-          new ErrorResponse("please provide a username", 400)
-        );
-      }
+      // if (!username) {
+      //   res
+      //     .status(400)
+      //     .json({ success: true, msg: "please provide a username" });
+      //   return next(
+      //     new ErrorResponse("please provide a username", 400)
+      //   );
+      // }
 
-      if (username.length < 3 || username.length > 20) {
-        res
-          .status(400)
-          .json({
-            success: true,
-            msg: "Name must be 3 to 20 characters long!",
-          });
-        return next(
-          new ErrorResponse("Name must be 3 to 20 characters long!", 400)
-        );
-      }
+      // if (username.length < 3 || username.length > 20) {
+      //   res
+      //     .status(400)
+      //     .json({
+      //       success: true,
+      //       msg: "Name must be 3 to 20 characters long!",
+      //     });
+      //   return next(
+      //     new ErrorResponse("Name must be 3 to 20 characters long!", 400)
+      //   );
+      // }
        
 
       //check on email
-      if (!email) {
-        res.status(400).json({ success: true, msg: "please provide an email" });
-        return next(new ErrorResponse("please provide an email", 400));
-      }
+      // if (!email) {
+      //   res.status(400).json({ success: true, msg: "please provide an email" });
+      //   return next(new ErrorResponse("please provide an email", 400));
+      // }
+
+
+       // Check if the email is already registered
+       const existingUser = await Users.findOne({ email: email.toLowerCase() });
+       if (existingUser) {
+        return res.status(409).json({ message: 'User already exists' });
+         return next(new ErrorResponse("User already exists", 409));  // User already exists
+       }
+
+// Check if the email is valid
       let newEmail = email.toLowerCase().replace(/ /g, "")
       if (checkEmailValidity(newEmail) === false) {
-        res.status(400).json({ msg: "Invalid email." });
-        return next(new ErrorResponse("Invalid email.", 400));
+        res.status(409).json({ message: "Invalid data entry." });
+        return next(new ErrorResponse("Invalid data entry.", 409));
       }
       
-      const user_email = await Users.findOne({ email:newEmail });
+      // const user_email = await Users.findOne({ email:newEmail });
       
-      if (user_email) {
-        res.status(400).json({ msg: "This email already exists." });
-        return next(new ErrorResponse("This email already exists.", 400));
-      }
+      // if (user_email) {
+      //   res.status(400).json({ msg: "This email already exists." });
+      //   return next(new ErrorResponse("This email already exists.", 400));
+      // }
 
       //this removes spaces form user name and lowercase all the letters
-      let newUserName = username.toLowerCase().replace(/ /g, "");
+      // let newUserName = username.toLowerCase().replace(/ /g, "");
        
-      const user_name = await Users.findOne({ username: newUserName });
+      // const user_name = await Users.findOne({ username: newUserName });
 
-      if (user_name) {
-        res.status(400).json({ msg: "This user name already exists." });
-        return next(new ErrorResponse("This user name already exists.", 400));
-      }
+      // if (user_name) {
+      //   res.status(400).json({ msg: "This user name already exists." });
+      //   return next(new ErrorResponse("This user name already exists.", 400));
+      // }
 
       //check on password
-      if (!password) {
-        res
-          .status(400)
-          .json({ success: true, msg: "please provide a password" });
-        return next(new ErrorResponse("please provide a password", 400));
-      }
+      // if (!password) {
+      //   res
+      //     .status(400)
+      //     .json({ success: true, msg: "please provide a password" });
+      //   return next(new ErrorResponse("please provide a password", 400));
+      // }
 
       if (password.length < 6) {
         res
-          .status(400)
+          .status(409)
           .json({
             success: true,
-            msg: "password must be atleast 6 characters",
+            message: "password must be atleast 6 characters",
           });
         return next(
-          new ErrorResponse("password must be atleast 6 characters", 400)
+          new ErrorResponse("password must be atleast 6 characters", 409)
         );
       }
 
       //encripting the Password
       const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(password, salt);
+      const hashedPassword = await bcrypt.hash(password, salt);
      
-      //creating new user
+      // //creating new user
+      // const newUser = new Users({
+      //   fullname,
+      //   username: newUserName,
+      //   email:newEmail,
+      //   password: passwordHash,
+      //   gender,
+      // });
+
+      // Create a new user (with additional fields)
+      const uid = uuidv4();
       const newUser = new Users({
-        fullname,
-        username: newUserName,
-        email:newEmail,
-        password: passwordHash,
-        gender,
+        uid,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        user_type,
+        first_name,
+        last_name,
+        profile_picture_url,
+        bio,
+        location,
+        specialties: specialties ? JSON.stringify(specialties) : [],
+        years_experience,
+        portfolio_link,
+        company_name,
+        company_size,
+        industry,
+        created_at: Date.now(),
+        updated_at: Date.now(),
       });
 
       //creating access token
       const access_token = createAccessToken({ id: newUser._id });
       // creating refresh token
       const refresh_token = createRefreshToken({ id: newUser._id });
-      res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
-
-      res.cookie("refreshtoken", refresh_token, {
-        httpOnly: true,
-        path: "/api/refresh_token",
-        maxAge: 30 * 24 * 60 * 60 * 1000, //30days
-      });
+      
 
       const OTP = generateOTP();
       //encripting the OTP
@@ -356,14 +387,21 @@ const authCtrl = {
       await newUser.save();
       //sending mail
       mailTransport().sendMail({
-        form: "suberDesign@suberdesign.com",
+        form: "info@subercraftex.com",
         to: newUser.email,
         subject: "Verify your email account",
         html: generateEmailTemplate(OTP),
       });
+      res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
 
+      res.cookie("refreshtoken", refresh_token, {
+        httpOnly: true,
+        path: "/api/refresh_token",
+        maxAge: 30 * 24 * 60 * 60 * 1000, //30days
+      });
+      // Return success response
       res.status(201).json({
-        msg: "Register Success!",
+        
         access_token,
         refresh_token,
         user: {
@@ -372,7 +410,7 @@ const authCtrl = {
         },
       });
     } catch (err) {
-      return res.status(500).json({ msg: err.message });
+      return res.status(500).json({ message: err.message });
     }
   },
   verifyEmail: async (req, res, next) => {
@@ -438,30 +476,31 @@ const authCtrl = {
   login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
+     
       let loginEmail = email.toLowerCase()
       //check on email
       if (!email) {
-        res.status(400).json({ success: true, msg: "please provide an email" });
+        res.status(401).json({ success: true, msg: "please provide an email" });
         return next(new ErrorResponse("please provide an email", 400));
       }
 
       if (checkEmailValidity(loginEmail) === false) {
-        res.status(400).json({ msg: "Invalid email." });
+        res.status(401).json({ msg: "Invalid email." });
         return next(new ErrorResponse("Invalid email.", 400));
       }
 
       const user = await Users.findOne({ email:loginEmail }).select("+password");
 
       if (!user) {
-        res.status(400).json({ msg: "Invalid Login credentials" });
+        res.status(401).json({ msg: "Invalid Login credentials" });
         return next(new ErrorResponse("Invalid Login credentials.", 400));
       }
 
       //check on password
       if (!password) {
         res
-          .status(400)
-          .json({ success: true, msg: "Invalid Login credentials" });
+          .status(401)
+          .json({ success: true, message: "Invalid Login credentials" });
         return next(new ErrorResponse("Invalid Login credentials", 400));
       }
 
@@ -470,8 +509,8 @@ const authCtrl = {
 
       if (!isMatch) {
         res
-          .status(400)
-          .json({ success: true, msg: "Invalid Login credentials" });
+          .status(401)
+          .json({ success: true, message: "Invalid Login credentials" });
         return next(new ErrorResponse("Invalid Login credentials", 400));
       }
 
@@ -489,7 +528,7 @@ const authCtrl = {
       });
 
       res.status(200).json({
-        msg: "Login Success!",
+        
         access_token,
         refresh_token,
         user: {
@@ -497,15 +536,16 @@ const authCtrl = {
           password: "",
         },
       });
-    } catch (err) {
-      return res.status(500).json({ msg: err.message });
+    } catch (error) {
+      console.error('Login error:', error);
+      return res.status(500).json({ message: 'Internal server error' });
     }
   },
 
   logout: async (req, res, next) => {
     try {
       res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
-      return res.json({ msg: "Logged out!" });
+      return res.json({ message: "Logged out!" });
     } catch (err) {
       return res.status(500).json({ msg: err.message });
     }

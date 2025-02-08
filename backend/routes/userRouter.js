@@ -8,7 +8,7 @@ const fileUpload = require('../helpers/filehelper');
 
 router.use(auth);
 
-router.patch('/updateMe', 
+router.patch('/users/updateMe', 
   fileUpload.uploadUserImage,
   fileUpload.resizeUserPhoto,
   userController.updateMe

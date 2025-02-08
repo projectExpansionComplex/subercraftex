@@ -3,15 +3,10 @@ const mongoose = require('mongoose')
 
 
 const UserSchema = new mongoose.Schema({
-  fullname:{
-    type:String,
-    trim:true,
-    maxlength:25,
-    required:true
-  },
+  uid: { type: String, unique: true },
+  
   username:{
     type:String,
-    required:[true,"please provide a username  "],
     unique:true,
     maxlength:25,
     trim:true,
@@ -32,17 +27,25 @@ const UserSchema = new mongoose.Schema({
     minlength:6,
     select:false
   },
-  avatar:{
-    type:String,
-    default:"https://res.cloudinary.com/devatchannel/image/upload/v1602752402/avatar/avatar_cugq40.png"
-  },
+  user_type: { type: String, enum: ['individual', 'designer','business'], default: 'user' },
+  first_name: { type: String, required: true },
+  last_name: { type: String, required: true },
+  profile_picture_url: { type: String,default:"https://res.cloudinary.com/devatchannel/image/upload/v1602752402/avatar/avatar_cugq40.png" },
+  bio: { type: String },
+  location: { type: String },
+  specialties: { type: [String], default: [] },
+  years_experience: { type: Number },
+  portfolio_link: { type: String },
+  company_name: { type: String },
+  company_size: { type: String },
+  industry: { type: String },
   googleId: {
     type: String,
     unique: true,
     sparse: true, // Allows for unique but nullable values
   },
   fileName: String,
-  role:{type:String,default:'user'},
+  role:{type:String,default:'user', enum: ['admin', 'user']},
   gender:{type:String,default:''},
   mobile:{type:String,default:''},
   address:{type:String,default:''},

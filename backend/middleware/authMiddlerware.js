@@ -63,8 +63,8 @@ const jwt = require('jsonwebtoken')
   // Verify the token
       const decoded_token = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
       if(!decoded_token){
-        res.status(400).json({msg:"Invalid Authentication"})
-        return next(new ErrorResponse("Invalid Authentication", 400))
+        res.status(403).json({msg:"Invalid Authentication"})
+        return next(new ErrorResponse("Invalid Authentication", 403))
       }
 
         // Find user based on token
@@ -77,7 +77,7 @@ const jwt = require('jsonwebtoken')
       req.user = user
       next()
     } catch (err) {
-      return res.status(500).json({msg:err.message})
+      return res.status(401).json({msg:err.message})
     }
   }
 
