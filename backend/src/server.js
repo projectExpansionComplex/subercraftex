@@ -14,12 +14,18 @@ const app = express();
 
 
 
-// Limit requests from the same IP
+// Enable trust proxy to handle X-Forwarded-For headers correctly
+app.set('trust proxy', 1); // or 'true' for multiple proxies
+
+// Setup the rate limiter
 const limiter = rateLimit({
-  max: 200,
-  windowMs: 60 * 60 * 1000,
-  message: 'Too many requests from this IP, Please try again late!'
+  max: 200, // Limit to 200 requests per IP
+  windowMs: 60 * 60 * 1000, // 1 hour
+  message: 'Too many requests from this IP, Please try again later!' // Error message
 });
+
+// Apply the rate limiter to all requests
+app.use(limiter);
 
 // File upload configuration
 const storage = multer.diskStorage({
