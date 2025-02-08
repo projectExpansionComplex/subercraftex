@@ -24,7 +24,7 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, Please try again later!' // Error message
 });
 
-// Apply the rate limiter to all requests
+// Apply the rate limiter to all requests below
 app.use(limiter);
 
 // File upload configuration
