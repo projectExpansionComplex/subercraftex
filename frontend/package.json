@@ -97,7 +97,8 @@
     "use-react-screenshot": "^4.0.0",
     "vaul": "^0.9.3",
     "yup": "*",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "vite": "^6.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
