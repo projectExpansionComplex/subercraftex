@@ -43,7 +43,7 @@ describe('Authentication Routes', () => {
     await mongoose.connection.close();
   });
 
-  describe('POST /api/register', () => {
+  describe('POST /api/users/register', () => {
     // it('should register a new user', async () => {
     //   const res = await request(app)
     //     .post('/api/register')
@@ -62,36 +62,39 @@ describe('Authentication Routes', () => {
 
     it('should not register a user with an existing email', async () => {
       await User.create({
-        fullname:"siysinyuy",
-	        username:"suber",
+        first_name:"mohamad",
+        last_name:"siysinyuy",
+        user_type:"individual",
 	        email:"mohamadsiysinyuy@gmail.com",
 	        password:"msb1@@@@"
       });
 
       const res = await request(app)
-        .post('/api/register')
+        .post('/api/users/register')
         .send({
-          fullname:"siysinyuy",
-	        username:"suber",
+          first_name:"mohamad",
+        last_name:"siysinyuy",
+        user_type:"individual",
 	        email:"mohamadsiysinyuy@gmail.com",
 	        password:"msb1@@@@"
         });
 
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('msg', 'This email already exists.');
+      expect(res.statusCode).toEqual(409);
+      expect(res.body).toHaveProperty("message", "User already exists");
     });
 
   });
 
-  describe('POST /api/login', () => {
+  describe('POST /api/users/login', () => {
     beforeEach(async () => {
       const salt = await bcrypt.genSalt(10);
 
       const passwordHash = await bcrypt.hash('msb1@@@@', salt);
 
       await User.create({
-        fullname:"siysinyuy",
-	        username:"suber",
+        user_type:"individual",
+        first_name:"mohamad",
+        last_name:"siysinyuy",
 	        email:"mohamadsiysinyuy@gmail.com",
 	        password:passwordHash
       });
@@ -113,27 +116,27 @@ describe('Authentication Routes', () => {
 
     it('should not log in a user with an incorrect password', async () => {
       const res = await request(app)
-        .post('/api/login')
+        .post('/api/users/login')
         .send({
           email: 'mohamadsiysinyuy@gmail.com',
           password: 'wrongpassword',
         });
 
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('msg', 'Invalid Login credentials');
+      expect(res.statusCode).toEqual(401);
+      expect(res.body).toHaveProperty("message", "Invalid Login credentials", "success", true);
       expect(res.body).toHaveProperty('success', true);
 
     });
 
     it('should not log in a non-existent user', async () => {
       const res = await request(app)
-        .post('/api/login')
+        .post('/api/users/login')
         .send({
           email: 'nonexistent@example.com',
           password: 'msb1@@@@',
         });
 
-      expect(res.statusCode).toEqual(400);
+      expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty('msg', 'Invalid Login credentials');
     });
   });
