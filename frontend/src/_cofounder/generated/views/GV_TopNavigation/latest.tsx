@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch, logout, toggle_search_overlay, set_preferences } from '@/store/main';
 import { Search, ChevronDown, ShoppingCart, Menu, X } from 'lucide-react';
-
+import {logo} from '@/images';
 
 
 import {
@@ -33,7 +33,7 @@ const GV_TopNavigation: React.FC = () => {
   const handleLogout = useCallback(async () => {
     await dispatch(logout());
     navigate('/');
-    window.location.reload();
+    
   }, [dispatch, navigate]);
 
   const handleLanguageChange = useCallback((newLanguage: string) => {
@@ -50,20 +50,27 @@ const GV_TopNavigation: React.FC = () => {
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+  const handleLoginPopup = () => {
+    dispatch(logout());
+    setUserMenuOpen(false);
+    navigate('/');
+    window.location.reload();
+  };
+
   return (
     <nav className=" bg-white shadow-md fixed top-0 left-0 right-0 z-50">
       <div className="navbersubContainer navbar max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <div className="flex items-center">
+          <div className="flex items-center" style={{justifyContent: "center"}}>
             <Link to="/" className="flex-shrink-0">
-              <img className="h-10 w-auto" src="https://picsum.photos/seed/suber-craftex/200" alt="SUBER-Craftex Logo" />
+              <img className="h-10 w-auto logoMain" src={logo} alt="SUBER-Craftex" />
             </Link>
-            <div className="hidden md:block ml-10">
+            <div className="hidden md:block ml-10" style={{color: "black"}}>
               <NavigationMenu>
                 <NavigationMenuList className='parentNavLink'>
                   <NavigationMenuItem className='navbarLinks'>
                     <NavigationMenuTrigger>Explore Designs</NavigationMenuTrigger>
-                    <NavigationMenuContent>
+                    <NavigationMenuContent style={{top:0}}>
                       <NavigationMenuLink href="/explore">All Designs</NavigationMenuLink>
                       <NavigationMenuLink href="/explore/featured">Featured</NavigationMenuLink>
                       <NavigationMenuLink href="/explore/trending">Trending</NavigationMenuLink>
@@ -169,12 +176,12 @@ const GV_TopNavigation: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-x-2 naveLoginButtonContainer">
-                <Button asChild variant="default">
-                  <Link to="/login">Login</Link>
+              <div className="space-x-2 naveLoginButtonContainer" style={{width:"11vw"}}>
+                <Button onClick={handleLoginPopup} asChild variant="default">
+                  <Link to='/' >Login</Link>
                 </Button>
-                <Button asChild variant="outline">
-                  <Link to="/register">Sign Up</Link>
+                <Button onClick={handleLoginPopup} asChild variant="outline" style={{color:'black'}}>
+                  <Link to='/'>Sign Up</Link>
                 </Button>
               </div>
             )}

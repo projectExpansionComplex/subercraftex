@@ -186,11 +186,21 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }, { dispatch }) => {
     try {
-      console.log("Attempting login with credentials:", credentials);
+      
       
       const response = await axiosInstance.post('/api/users/login', credentials);
       
-      console.log("Login response:", response.data);
+      
+      
+    
+
+      if(response.data.success === true){
+        dispatch(add_notification({
+          id: Date.now().toString(),
+          type: 'success',
+          message: 'Login successful!'
+        }));
+      }
 
        // Extract and map the API response to fit the AuthState structure
        const formattedData = {
@@ -214,7 +224,7 @@ export const login = createAsyncThunk(
       dispatch(notificationsSlice.actions.add_notification({
         id: Date.now().toString(),
         type: 'error',
-        message: 'Login failed. Please try again.',
+        message: error.response.data.message ? error.response.data.message :'Login failed. Please try again.',
       }));
       throw error;
     }

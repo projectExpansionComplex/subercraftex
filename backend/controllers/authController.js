@@ -12,14 +12,8 @@ const crypto = require("crypto");
 // check email validity
 const checkEmailValidity = (email) => {
   // don't remember from where i copied this code, but this works.
-  let re =
-    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-
-  if (re.test(email)) {
-    return true;
-  } else {
-    return false;
-  }
+  let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
 };
 
 //creating access token
@@ -287,7 +281,7 @@ const authCtrl = {
        }
 
 // Check if the email is valid
-      let newEmail = email.toLowerCase().replace(/ /g, "")
+      let newEmail = email.toLowerCase().trim(); // Trim spaces
       if (checkEmailValidity(newEmail) === false) {
         res.status(409).json({ message: "Invalid data entry." });
         return next(new ErrorResponse("Invalid data entry.", 409));
@@ -477,68 +471,62 @@ const authCtrl = {
     try {
       const { email, password } = req.body;
      
-      let loginEmail = email.toLowerCase()
-      //check on email
-      if (!email) {
-        res.status(401).json({ success: true, msg: "please provide an email" });
-        return next(new ErrorResponse("please provide an email", 400));
-      }
+      
+      // Validate email presence
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Please provide an email" });
+    }
 
-      if (checkEmailValidity(loginEmail) === false) {
-        res.status(401).json({ msg: "Invalid email." });
-        return next(new ErrorResponse("Invalid email.", 400));
-      }
+    
+    let loginEmail = email.toLowerCase().trim();
+    
 
-      const user = await Users.findOne({ email:loginEmail }).select("+password");
+    // Validate email format
+    if (!checkEmailValidity(loginEmail)) {
+      return res.status(400).json({ success: false, message: "Invalid email format" });
+    }
 
-      if (!user) {
-        res.status(401).json({ msg: "Invalid Login credentials" });
-        return next(new ErrorResponse("Invalid Login credentials.", 400));
-      }
+       // Check if user exists
+    const user = await Users.findOne({ email: loginEmail }).select("+password");
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Invalid login credentials" });
+    }
 
-      //check on password
-      if (!password) {
-        res
-          .status(401)
-          .json({ success: true, message: "Invalid Login credentials" });
-        return next(new ErrorResponse("Invalid Login credentials", 400));
-      }
+     // Validate password presence
+    if (!password) {
+      return res.status(400).json({ success: false, message: "Please provide a password" });
+    }
 
-      // comparing passwords if they match
-      const isMatch = await bcrypt.compare(password, user.password);
+       // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Invalid login credentials" });
+    }
 
-      if (!isMatch) {
-        res
-          .status(401)
-          .json({ success: true, message: "Invalid Login credentials" });
-        return next(new ErrorResponse("Invalid Login credentials", 400));
-      }
+        // Create access and refresh tokens
+        const access_token = createAccessToken({ id: user._id });
+        const refresh_token = createRefreshToken({ id: user._id });
+    
+        // Clear and set refresh token cookie
+    res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
+    res.cookie("refreshtoken", refresh_token, {
+      httpOnly: true,
+      path: "/api/refresh_token",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
 
-      //creating access token
-      const access_token = createAccessToken({ id: user._id });
-      // creating refresh token
-      const refresh_token = createRefreshToken({ id: user._id });
-
-      res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
-
-      res.cookie("refreshtoken", refresh_token, {
-        httpOnly: true,
-        path: "/api/refresh_token",
-        maxAge: 30 * 24 * 60 * 60 * 1000, //30days
-      });
-
-      res.status(200).json({
-        
-        access_token,
-        refresh_token,
-        user: {
-          ...user._doc,
-          password: "",
-        },
-      });
+      // Send success response
+    return res.status(200).json({
+      success: true,
+      access_token,
+      refresh_token,
+      user: {
+        ...user._doc,
+        password: undefined, // Don't send password in response
+      },
+    });
     } catch (error) {
-      console.error('Login error:', error);
-      return res.status(500).json({ message: 'Internal server error' });
+      next(error); // Pass error to global error handler
     }
   },
 
