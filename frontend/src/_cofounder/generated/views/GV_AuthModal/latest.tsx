@@ -83,45 +83,20 @@ const GV_AuthModal: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // //bypassing redux and submiting directly
-      // const response = await axiosInstance.post('/api/users/login', {
-      //   email: loginForm.email,
-      //   password: loginForm.password
-      // });
-      // //modifying resposes data
-      // const renameKeys = (obj, keyMap) => {
-      //   return Object.fromEntries(
-      //     Object.entries(obj).map(([key, value]) => [keyMap[key] || key, value])
-      //   );
-      // };
-      // const keyUpdates = {
-      //   access_token: "token"
-      // };
-      // const newData = renameKeys(response.data, keyUpdates);
       
-      // dispatch(set_auth(newData));
-      // dispatch(add_notification({
-      //   id: Date.now().toString(),
-      //   type: 'success',
-      //   message: 'Login successful!'
-      // }));
-      // setIsOpen(false);
 
-      dispatch(login({
+      const results = await dispatch(login({
         email: loginForm.email,
         password: loginForm.password
       }));
-      dispatch(add_notification({
-        id: Date.now().toString(),
-        type: 'success',
-        message: 'Login successful!'
-      }));
-      setIsOpen(false);
+     console.log(results,"this is results data in form login")
+
+      if(results.payload.auth_token){setIsOpen(false);}
     } catch (error) {
       dispatch(add_notification({
         id: Date.now().toString(),
         type: 'error',
-        message: 'Login failed. Please check your credentials.'
+        message: error.response.data.message ? error.response.data.message :'Login failed. Please check your credentials.'
       }));
     } finally {
       setIsSubmitting(false);
@@ -134,7 +109,7 @@ const GV_AuthModal: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-     
+    
       const response = await axiosInstance.post('/api/users/register', {
         first_name: registerForm.firstName,
         last_name: registerForm.lastName,
@@ -152,10 +127,11 @@ const GV_AuthModal: React.FC = () => {
       }));
       setIsOpen(false);
     } catch (error) {
+      
       dispatch(add_notification({
         id: Date.now().toString(),
         type: 'error',
-        message: 'Registration failed. Please try again.'
+        message: error.response.data.message ? error.response.data.message :"Registration failed. Please try again."
       }));
     } finally {
       setIsSubmitting(false);
