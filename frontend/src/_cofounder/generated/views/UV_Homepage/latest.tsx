@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { RootState } from '@/store/main';
+import baseUrl from '../../../../utils/baseURL.js'
 
 const UV_Homepage: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
@@ -12,7 +13,7 @@ const UV_Homepage: React.FC = () => {
   const [trendingProducts, setTrendingProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   const { current_user } = useSelector((state: RootState) => state.auth);
   const { theme, language } = useSelector((state: RootState) => state.preferences);
 
@@ -28,11 +29,11 @@ const UV_Homepage: React.FC = () => {
           latestBlogPostsRes,
           trendingProductsRes
         ] = await Promise.all([
-          axios.get('http://localhost:1337/api/featured-products'),
-          axios.get('http://localhost:1337/api/category-products'),
-          axios.get('http://localhost:1337/api/featured-designers'),
-          axios.get('http://localhost:1337/api/latest-blog-posts'),
-          axios.get('http://localhost:1337/api/trending-products')
+          axios.get('http://localhost:4000/api/featured-products'),
+          axios.get('http://localhost:4000/api/category-products'),
+          axios.get('http://localhost:4000/api/featured-designers'),
+          axios.get('http://localhost:4000/api/latest-blog-posts'),
+          axios.get('http://localhost:4000/api/trending-products')
         ]);
 
         setFeaturedProducts(featuredProductsRes.data);
@@ -51,6 +52,29 @@ const UV_Homepage: React.FC = () => {
     fetchHomePageContent();
   }, []);
 
+
+
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Function to go to the next slide
+  const nextSlide = () => {
+    setActiveIndex((prevIndex) => (prevIndex + 1) % featuredProducts.length);
+  };
+
+  // Function to go to the previous slide
+  const prevSlide = () => {
+    setActiveIndex((prevIndex) =>
+      prevIndex === 0 ? featuredProducts.length - 1 : prevIndex - 1
+    );
+  };
+
+  // Automatic slide transition
+  // useEffect(() => {
+  //   const interval = setInterval(nextSlide, 5000); // Change slide every 5 seconds
+  //   return () => clearInterval(interval); // Cleanup interval on unmount
+  // }, [activeIndex]);
+
+
   const handleCategoryClick = (categoryUid: string) => {
     // Navigation handled by Link component
   };
@@ -66,6 +90,8 @@ const UV_Homepage: React.FC = () => {
   const handleBlogPostClick = (postUid: string) => {
     // Navigation handled by Link component
   };
+
+  
 
   if (isLoading) {
     return (
@@ -90,17 +116,31 @@ const UV_Homepage: React.FC = () => {
         <section className="hero-carousel mb-12">
           <div className="relative">
             {featuredProducts.map((product, index) => (
-              <div key={product.id} className={`carousel-item ${index === 0 ? 'block' : 'hidden'}`}>
-                <img src={product.imageUrl} alt={product.name} className="w-full h-96 object-cover" loading="lazy" />
+              <div key={product._id} className={`carousel-item ${index === activeIndex  ? 'block' : 'hidden'}`}>
+                {console.log("this is carosel",product,index)}
+                <img src={baseUrl + product.imageUrl} alt={product.name} className="w-full h-96 object-cover" loading="lazy" />
                 <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4">
                   <h2 className="text-2xl font-bold">{product.name}</h2>
                   <p className="text-lg">{product.description}</p>
-                  <Link to={`/product/${product.id}`} className="mt-2 inline-block bg-white text-black px-4 py-2 rounded">
+                  <Link to={`/product/${product._id}`} className="mt-2 inline-block bg-white text-black px-4 py-2 rounded">
                     View Product
                   </Link>
                 </div>
               </div>
             ))}
+             {/* Navigation Buttons */}
+        <button
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+          onClick={prevSlide}
+        >
+          &lt;
+        </button>
+        <button
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+          onClick={nextSlide}
+        >
+          &gt;
+        </button>
           </div>
         </section>
 
@@ -108,10 +148,13 @@ const UV_Homepage: React.FC = () => {
         <section className="category-grid mb-12">
           <h2 className="text-2xl font-bold mb-4">Shop by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            
             {Object.entries(categoryProducts).map(([category, products]) => (
               <Link key={category} to={`/category/${category}`} className="category-tile">
+               
                 <div className="relative h-48 rounded overflow-hidden">
-                  <img src={products[0]?.thumbnail} alt={category} className="w-full h-full object-cover" loading="lazy" />
+
+                  <img src={baseUrl + products[0]?.thumbnail} alt={category} className="w-full h-full object-cover" loading="lazy" />
                   <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
                     <span className="text-white text-xl font-bold">{category}</span>
                   </div>
@@ -161,11 +204,11 @@ const UV_Homepage: React.FC = () => {
           <h2 className="text-2xl font-bold mb-4">Trending Now</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {trendingProducts.map((product) => (
-              <Link key={product.id} to={`/product/${product.id}`} className="product-card">
+              <Link key={product.id} to={`/product/${product._id}`} className="product-card">
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <img src={product.thumbnail} alt={product.name} className="w-full h-48 object-cover" loading="lazy" />
+                  <img src={baseUrl + product.thumbnail} alt={product.name} className="w-full h-48 object-cover" loading="lazy" />
                   <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                    <h3 className="font-semibold text-lg mb-2" style={{color:"black"}}>{product.name}</h3>
                     <p className="text-gray-800 font-bold">${product.price.toFixed(2)}</p>
                   </div>
                 </div>
