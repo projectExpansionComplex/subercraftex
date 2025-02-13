@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { RootState } from '@/store/main';
 import baseUrl from '../../../../utils/baseURL.js'
+import axiosInstance from '@/utils/axiosInstance';
 
 const UV_Homepage: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
@@ -29,11 +30,11 @@ const UV_Homepage: React.FC = () => {
           latestBlogPostsRes,
           trendingProductsRes
         ] = await Promise.all([
-          axios.get('http://localhost:4000/api/featured-products'),
-          axios.get('http://localhost:4000/api/category-products'),
-          axios.get('http://localhost:4000/api/featured-designers'),
-          axios.get('http://localhost:4000/api/latest-blog-posts'),
-          axios.get('http://localhost:4000/api/trending-products')
+          axiosInstance.get('/api/featured-products'),
+          axiosInstance.get('/api/category-products'),
+          axiosInstance.get('/api/featured-designers'),
+          axiosInstance.get('/api/latest-blog-posts'),
+          axiosInstance.get('/api/trending-products')
         ]);
 
         setFeaturedProducts(featuredProductsRes.data);
