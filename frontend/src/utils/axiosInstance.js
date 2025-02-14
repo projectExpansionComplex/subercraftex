@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+// const axiosInstance = axios.create({
+//     baseURL: 'https://subercraftex.com', // Replace with your backend URL
+//     timeout: 1000,
+//     headers: { 'Content-Type': 'application/json' },
+// });
+
 const axiosInstance = axios.create({
-    baseURL: 'https://subercraftex.com', // Replace with your backend URL
+    baseURL: 'http://localhost:4000', // Replace with your backend URL
     timeout: 1000,
     headers: { 'Content-Type': 'application/json' },
 });
