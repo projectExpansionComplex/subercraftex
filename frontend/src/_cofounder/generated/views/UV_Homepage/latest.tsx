@@ -118,7 +118,7 @@ const UV_Homepage: React.FC = () => {
           <div className="relative">
             {featuredProducts.map((product, index) => (
               <div key={product._id} className={`carousel-item ${index === activeIndex  ? 'block' : 'hidden'}`}>
-                {console.log("this is carosel",product,index)}
+               
                 <img src={baseUrl + product.imageUrl} alt={product.name} className="w-full h-96 object-cover" loading="lazy" />
                 <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4">
                   <h2 className="text-2xl font-bold">{product.name}</h2>
