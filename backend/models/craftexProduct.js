@@ -75,6 +75,10 @@ const craftexproductSchema = new mongoose.Schema({
     min: 0, 
     max: 5 
   }, // Average rating (calculated field)
+  tags: { 
+    type: [String], 
+    default: [] 
+  }, // Tags for personalized recommendations
   createdAt: { 
     type: Date, 
     default: Date.now 
