@@ -531,6 +531,7 @@ const authCtrl = {
   },
 
   logout: async (req, res, next) => {
+    
     try {
       res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
       return res.json({ message: "Logged out!" });

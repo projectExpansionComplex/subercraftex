@@ -32,7 +32,7 @@ const UV_Homepage: React.FC = () => {
         ] = await Promise.all([
           axiosInstance.get('/api/featured-products'),
           axiosInstance.get('/api/category-products'),
-          axiosInstance.get('/api/featured-designers'),
+          axiosInstance.get('/api/craftexdesigners'),
           axiosInstance.get('/api/latest-blog-posts'),
           axiosInstance.get('/api/trending-products')
         ]);
@@ -168,11 +168,12 @@ const UV_Homepage: React.FC = () => {
         {/* Featured Designers */}
         <section className="featured-designers mb-12">
           <h2 className="text-2xl font-bold mb-4">Featured Designers</h2>
-          <div className="flex overflow-x-auto space-x-4 pb-4">
+          <div className="flex overflow-x-auto space-x-4 pb-4" style={{    background: '#2c2a2a87'}}>
             {featuredDesigners.map((designer) => (
-              <Link key={designer.id} to={`/designer/${designer.id}`} className="flex-shrink-0">
+              <Link key={designer._id} to={`/designer/${designer._id}`} className="flex-shrink-0">
+               
                 <div className="w-48 text-center">
-                  <img src={designer.avatar} alt={designer.name} className="w-32 h-32 rounded-full mx-auto mb-2" loading="lazy" />
+                  <img src={baseUrl+designer.avatar} alt={designer.name} className="w-32 h-32 rounded-full mx-auto mb-2" loading="lazy" />
                   <h3 className="font-semibold">{designer.name}</h3>
                   <p className="text-sm text-gray-600">{designer.specialty}</p>
                 </div>
@@ -187,12 +188,13 @@ const UV_Homepage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {latestBlogPosts.map((post) => (
               <Link key={post.id} to={`/blog/${post.id}`} className="blog-post-card">
+               
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <img src={post.imageUrl} alt={post.title} className="w-full h-48 object-cover" loading="lazy" />
+                  <img src={baseUrl+post.imageUrl} alt={post.title} className="w-full h-48 object-cover" loading="lazy" />
                   <div className="p-4">
                     <h3 className="font-bold text-xl mb-2">{post.title}</h3>
                     <p className="text-gray-600 mb-2">{post.excerpt}</p>
-                    <p className="text-sm text-gray-500">By {post.author} on {new Date(post.publishDate).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-500">By {post.author ? `${post.author.first_name} ${post.author.last_name}` : 'Unknown Author'} on {new Date(post.publishDate).toLocaleDateString()}</p>
                   </div>
                 </div>
               </Link>
