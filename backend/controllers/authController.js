@@ -8,6 +8,7 @@ const ResetToken = require("../models/resetTokenModel");
 const ResetToken2 = require("../models/resetTokenModel2");
 const { v4: uuidv4 } = require('uuid');
 const crypto = require("crypto");
+const mongoose = require('mongoose');
 
 // check email validity
 const checkEmailValidity = (email) => {
@@ -235,43 +236,15 @@ const createRandomBytes = () =>
 
 const authCtrl = {
   register: async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      // const { fullname, username, email, password, gender } = req.body;
       const { username, email, password, user_type, first_name, last_name, profile_picture_url, bio, location, specialties, years_experience, portfolio_link, company_name, company_size, industry } = req.body;
       
       // Validate inputs (similar to your previous validation logic)
       if (!email || !password || !first_name || !last_name) {
         return res.status(409).json({ msg: "Please provide all required fields!" });
       }
-      //check on the username
-      // if (!username) {
-      //   res
-      //     .status(400)
-      //     .json({ success: true, msg: "please provide a username" });
-      //   return next(
-      //     new ErrorResponse("please provide a username", 400)
-      //   );
-      // }
-
-      // if (username.length < 3 || username.length > 20) {
-      //   res
-      //     .status(400)
-      //     .json({
-      //       success: true,
-      //       msg: "Name must be 3 to 20 characters long!",
-      //     });
-      //   return next(
-      //     new ErrorResponse("Name must be 3 to 20 characters long!", 400)
-      //   );
-      // }
-       
-
-      //check on email
-      // if (!email) {
-      //   res.status(400).json({ success: true, msg: "please provide an email" });
-      //   return next(new ErrorResponse("please provide an email", 400));
-      // }
-
 
        // Check if the email is already registered
        const existingUser = await Users.findOne({ email: email.toLowerCase() });
@@ -286,31 +259,7 @@ const authCtrl = {
         res.status(409).json({ message: "Invalid data entry." });
         return next(new ErrorResponse("Invalid data entry.", 409));
       }
-      
-      // const user_email = await Users.findOne({ email:newEmail });
-      
-      // if (user_email) {
-      //   res.status(400).json({ msg: "This email already exists." });
-      //   return next(new ErrorResponse("This email already exists.", 400));
-      // }
-
-      //this removes spaces form user name and lowercase all the letters
-      // let newUserName = username.toLowerCase().replace(/ /g, "");
-       
-      // const user_name = await Users.findOne({ username: newUserName });
-
-      // if (user_name) {
-      //   res.status(400).json({ msg: "This user name already exists." });
-      //   return next(new ErrorResponse("This user name already exists.", 400));
-      // }
-
-      //check on password
-      // if (!password) {
-      //   res
-      //     .status(400)
-      //     .json({ success: true, msg: "please provide a password" });
-      //   return next(new ErrorResponse("please provide a password", 400));
-      // }
+      // Check if the password is valid
 
       if (password.length < 6) {
         res
@@ -328,14 +277,7 @@ const authCtrl = {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
      
-      // //creating new user
-      // const newUser = new Users({
-      //   fullname,
-      //   username: newUserName,
-      //   email:newEmail,
-      //   password: passwordHash,
-      //   gender,
-      // });
+      
 
       // Create a new user (with additional fields)
       const uid = uuidv4();
@@ -359,26 +301,38 @@ const authCtrl = {
         updated_at: Date.now(),
       });
 
+      const OTP = generateOTP();
+      //encripting the OTP
+      const salt2 = await bcrypt.genSalt(10);
+      const OTPHash = await bcrypt.hash(OTP, salt2);
+
+
+      const verificationToken = new VerificationToken({
+              owner: newUser._id,
+              token: OTPHash,
+            });
+
       //creating access token
       const access_token = createAccessToken({ id: newUser._id });
       // creating refresh token
       const refresh_token = createRefreshToken({ id: newUser._id });
       
 
-      const OTP = generateOTP();
-      //encripting the OTP
-      const salt2 = await bcrypt.genSalt(10);
-      const OTPHash = await bcrypt.hash(OTP, salt2);
+    
+     
+      // //save verification token
+      // await verificationToken.save();
+      // //saving the user
+      // await newUser.save();
 
-      const verificationToken = new VerificationToken({
-        owner: newUser._id,
-        token: OTPHash,
-      });
+       // Save user and token in a transaction
+    await newUser.save({ session });
+    await verificationToken.save({ session });
 
-      //save verification token
-      await verificationToken.save();
-      //saving the user
-      await newUser.save();
+     // Commit the transaction
+     await session.commitTransaction();
+     session.endSession();
+
       //sending mail
       mailTransport().sendMail({
         form: "info@subercraftex.com",
@@ -386,6 +340,7 @@ const authCtrl = {
         subject: "Verify your email account",
         html: generateEmailTemplate(OTP),
       });
+
       res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
 
       res.cookie("refreshtoken", refresh_token, {
@@ -395,7 +350,7 @@ const authCtrl = {
       });
       // Return success response
       res.status(201).json({
-        
+        message: "User created successfully",
         access_token,
         refresh_token,
         user: {
@@ -404,7 +359,12 @@ const authCtrl = {
         },
       });
     } catch (err) {
-      return res.status(500).json({ message: err.message });
+      // return res.status(500).json({ message: err.message });
+      // Rollback the transaction on error
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Error creating user:', err);
+    res.status(500).json({ message: err.message });
     }
   },
   verifyEmail: async (req, res, next) => {

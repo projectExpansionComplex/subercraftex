@@ -4,8 +4,11 @@ const router = express.Router();
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
 const craftexUser = require('../models/userModel')
+const craftexCategory = require('../models/craftexCategory')
+
 const path = require('path')
 const sharp = require('sharp');
+const {auth, authorize} = require('../middleware/authMiddlerware')
 
 // Multer configuration for file uploads
 const upload = multer({
@@ -104,7 +107,10 @@ router.post(
 
         // Resize thumbnail using sharp
         await sharp(req.files['thumbnail'][0].path)
-          .resize(150, 150) // Resize to 150x150
+        .resize(150, 150, {
+          fit: 'inside', // Preserve aspect ratio, fit within 150x150
+          withoutEnlargement: true, // Do not enlarge the image if it's smaller than 150x150
+        })
           .toFile(resizedThumbnailPath); // Save resized image to a new path
 
         thumbnailUrl = `/uploads/products/${req.files['thumbnail'][0].filename.replace(
@@ -112,7 +118,7 @@ router.post(
           '-resized.jpg'
         )}`;
       }
-      console.log(imageUrl, "this is image")
+     
       // Create new product
       const product = new craftexProduct({
         name,
@@ -171,4 +177,36 @@ router.get('/api/trending-products', async (req, res) => {
   }
 });
 
+//------------------------------------------------------ Personalized Products
+router.get('/api/personalized-products', auth, async (req, res) => {
+  try {
+  
+    const userId = req.user.id; // Extracted from the JWT token
+
+    // Find the user and their preferences
+    const user = await craftexUser.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // If the user has no preferences, return trending products
+    if (!user.preferredCategories || user.preferredCategories.length === 0) {
+      const trendingProducts = await craftexProduct.find().sort({ salesCount: -1 }).limit(8);
+      return res.status(200).json(trendingProducts);
+    }
+
+    // Fetch products that match the user's preferred categories or tags
+    const personalizedProducts = await craftexProduct.find({
+      $or: [
+        { craftexCategory: { $in: user.preferredCategories } }, // Match by category
+        { tags: { $in: user.preferredTags || [] } }, // Match by tags (if available)
+      ],
+    }).limit(8); // Limit to 8 recommendations
+
+    res.status(200).json(personalizedProducts);
+  } catch (err) {
+    console.error('Error fetching personalized products:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 module.exports = router
