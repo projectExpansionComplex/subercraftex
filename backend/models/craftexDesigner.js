@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 
 const craftexdesignerSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true }, // Reference to the user
+  name: { type: String, required: true }, // Designer's display name
+  avatar: { type: String, default: "https://via.placeholder.com/150" }, // Profile picture URL
   specialty: { type: String, required: true }, // Designer's specialty (e.g., woodworking, apparel)
   bio: { type: String }, // Short bio or description
   portfolio: [{ type: String }], // Array of portfolio image URLs

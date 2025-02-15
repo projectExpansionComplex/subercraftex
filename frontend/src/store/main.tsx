@@ -237,6 +237,7 @@ export const logout = createAsyncThunk(
     try {
       await axiosInstance.post('/api/users/logout');
       dispatch(authSlice.actions.clear_auth());
+      
       window.location.reload();
     } catch (error) {
       console.error('Logout failed:', error);
