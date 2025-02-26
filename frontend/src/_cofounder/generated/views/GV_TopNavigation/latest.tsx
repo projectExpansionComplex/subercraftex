@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui';
 
 const GV_TopNavigation: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -176,7 +177,7 @@ const GV_TopNavigation: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-x-2 naveLoginButtonContainer" style={{width:"11vw"}}>
+              <div className="space-x-2 naveLoginButtonContainer" style={{width:"12vw"}}>
                 <Button onClick={handleLoginPopup} asChild variant="default">
                   <Link to='/' >Login</Link>
                 </Button>

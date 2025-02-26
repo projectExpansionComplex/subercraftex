@@ -4,7 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch, add_to_cart, add_notification } from '@/store/main';
 import axios from 'axios';
 import { debounce } from 'lodash';
-
+import axiosInstance from '@/utils/axiosInstance';
+import baseUrl from '../../../../utils/baseURL.js'
 // Custom hook for fetching products
 const useProducts = (categoryUid: string, filters: any, sort: string, page: number) => {
   const [products, setProducts] = useState<any[]>([]);
@@ -22,7 +23,7 @@ const useProducts = (categoryUid: string, filters: any, sort: string, page: numb
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get('http://localhost:1337/api/products', {
+        const response = await axiosInstance.get('/api/products-all', {
           params: {
             category_uid: categoryUid,
             page,
@@ -81,7 +82,8 @@ const UV_CategoryListing: React.FC = () => {
   useEffect(() => {
     const fetchCategoryInfo = async () => {
       try {
-        const response = await axios.get(`http://localhost:1337/api/categories/${category_uid}`);
+        const response = await axiosInstance.get(`api/craftexcategories/filter/${category_uid}`);
+        console.log(response.data,"this is the responsen data");
         setCategoryInfo(response.data);
       } catch (err) {
         console.error('Failed to fetch category info:', err);
@@ -139,7 +141,7 @@ const UV_CategoryListing: React.FC = () => {
     }
 
     try {
-      await axios.post('http://localhost:1337/api/wishlist', { product_uid: productId }, {
+      await axios.post('wishlist', { product_uid: productId }, {
         headers: { Authorization: `Bearer ${auth_token}` }
       });
       dispatch(add_notification({
@@ -171,22 +173,27 @@ const UV_CategoryListing: React.FC = () => {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-8">
-        <nav className="text-sm breadcrumbs mb-4">
+      <div className="container mx-auto px-4 py-8" style={{ paddingTop: '7rem' }}>
+        <nav className="text-sm breadcrumbs mb-4" >
           <ul>
             <li><Link to="/">Home</Link></li>
             <li><Link to="/shop">Shop</Link></li>
             <li>{categoryInfo.name}</li>
+           
           </ul>
         </nav>
+          {/* Category Header */}
+        <div className="mb-8">
+          
+          <h1 className="text-3xl font-bold mb-2">{categoryInfo[0]?.name}</h1>
+          <p className="text-gray-600">{categoryInfo[0]?.description}</p>
+        </div>
 
-        <h1 className="text-3xl font-bold mb-4">{categoryInfo.name}</h1>
-        <p className="text-gray-600 mb-8">{categoryInfo.description}</p>
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Filter Sidebar */}
-          <div className="w-full md:w-1/4">
-            <h2 className="text-xl font-semibold mb-4">Filters</h2>
+          <div className="w-full md:w-1/4 bg-[#F9FAFB] p-6 rounded-lg">
+            <h2 className="text-xl font-bold mb-4">Filters</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Price Range</label>
@@ -239,7 +246,7 @@ const UV_CategoryListing: React.FC = () => {
 
           {/* Product Listing */}
           <div className="w-full md:w-3/4">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-6">
               <div className="flex items-center space-x-2">
                 <label htmlFor="sort" className="text-sm font-medium text-gray-700">Sort by:</label>
                 <select
@@ -292,8 +299,8 @@ const UV_CategoryListing: React.FC = () => {
               <>
                 <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-${viewMode} gap-6`}>
                   {products.map((product) => (
-                    <div key={product.uid} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-                      <img src={product.thumbnail} alt={product.name} className="w-full h-48 object-cover" />
+                    <div key={product._id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                      <img src={baseUrl + product.thumbnail} alt={product.name} className="w-full h-48 object-cover" />
                       <div className="p-4">
                         <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
                         <p className="text-gray-600 mb-2">{product.designerName}</p>
@@ -369,9 +376,10 @@ const UV_CategoryListing: React.FC = () => {
                 </svg>
               </button>
             </div>
-            <img src={quickViewProduct.thumbnail} alt={quickViewProduct.name} className="w-full h-64 object-cover mb-4 rounded" />
-            <p className="text-gray-600 mb-2">{quickViewProduct.designerName}</p>
-            <p className="text-xl font-bold mb-4">${quickViewProduct.price.toFixed(2)}</p>
+            {console.log(quickViewProduct,"quickViewProduct.thumbnail")}
+            <img src={baseUrl + quickViewProduct.thumbnail} alt={quickViewProduct.name} className="w-full h-64 object-cover mb-4 rounded" />
+            <p className="text-gray-600 mb-2">{quickViewProduct.designer.first_name} {quickViewProduct.designer.last_name}</p>
+            <p className="text-xl font-bold mb-4" style={{color:"#374151"}}>${quickViewProduct.price.toFixed(2)}</p>
             <p className="text-gray-700 mb-4">{quickViewProduct.description}</p>
             <div className="flex space-x-4">
               <button

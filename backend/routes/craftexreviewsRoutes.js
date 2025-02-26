@@ -29,7 +29,67 @@ const upload3 = multer({
   }
 });
 
+// Helper function to recalculate average rating for the product
+const updateProductAverageRating = async (productUid) => {
+  const product = await craftexProduct.findOne({ _id: productUid }).populate('ratings');
+  if (product && product.ratings.length > 0) {
+    const totalRatings = product.ratings.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = totalRatings / product.ratings.length;
+
+    // Update the average rating in the product
+    await craftexProduct.findOneAndUpdate(
+      { uid: productUid },
+      { averageRating }
+    );
+  }
+};
+
 // POST Route to Create a New Review
+router.get('/api/craftexreviews/product/:productId', async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    // Find reviews related to the specific product ID
+    const reviews = await craftexReview.find({ product: productId })
+    .populate('user', 'name email')
+    .populate('product', 'name')
+    .populate('designer', 'name');
+
+    if (!reviews.length) {
+      return res.status(404).json({ message: 'No reviews found for this product' });
+    }
+
+    res.status(200).json(reviews);
+  } catch (err) {
+    console.error('Error fetching reviews by product ID:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// 6. GET Route to Fetch Reviews by Product or Designer
+router.get('/api/craftexreviews', async (req, res) => {
+  try {
+    const { product, designer } = req.query;
+    const filter = {};
+
+    if (product) filter.product = product;
+    if (designer) filter.designer = designer;
+
+    const reviews = await craftexReview.find(filter)
+      .populate('user', 'name email')
+      .populate('product', 'name')
+      .populate('designer', 'name');
+
+    res.status(200).json(reviews);
+  } catch (err) {
+    console.error('Error fetching reviews:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
+
 
 router.post(
   '/api/craftexreviews',
@@ -80,6 +140,16 @@ router.post(
       });
 
       const savedReview = await newReview.save();
+      // Update the product's ratings array to include this new review
+    await craftexProduct.findOneAndUpdate(
+      { _id: productUid },
+      { $push: { ratings: review._id } } // Add the new review's ID to the ratings array
+    );
+
+    // Recalculate the average rating for the product
+    await updateProductAverageRating(productUid);
+
+    return review;
       res.status(201).json(savedReview);
     } catch (err) {
       console.error('Error creating review:', err);
@@ -94,7 +164,8 @@ router.get('/api/craftexreviews', async (req, res) => {
     const reviews = await craftexReview.find()
       .populate('user', 'name email')
       .populate('product', 'name')
-      .populate('designer', 'name');
+      .populate('designer', 'name')
+      
 
     res.status(200).json(reviews);
   } catch (err) {
@@ -166,28 +237,6 @@ router.delete('/api/craftexreviews/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-// 6. GET Route to Fetch Reviews by Product or Designer
-router.get('/api/craftexreviews', async (req, res) => {
-  try {
-    const { product, designer } = req.query;
-    const filter = {};
-
-    if (product) filter.product = product;
-    if (designer) filter.designer = designer;
-
-    const reviews = await craftexReview.find(filter)
-      .populate('user', 'name email')
-      .populate('product', 'name')
-      .populate('designer', 'name');
-
-    res.status(200).json(reviews);
-  } catch (err) {
-    console.error('Error fetching reviews:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-
 
 
 

@@ -32,12 +32,94 @@ const upload = multer({
 });
 
 //------------------------------------------------------ CRUD Operations for Products
+// GET /api/products-all with filtering, pagination, and sorting
 router.get('/api/products-all', async (req, res) => {
   try {
-    const products = await craftexProduct.find();
-    res.json(products);
+    // Extract query parameters
+    const {
+      category_uid,
+      page = 1,
+      limit = 20,
+      sort = 'popularity',
+      price_min,
+      price_max,
+      designer,
+      country,
+      material,
+    } = req.query;
+
+    // Build the query object
+    const query = {};
+
+    // Filter by category_uid (category name)
+    if (category_uid) {
+      // Find the category by its name to get its ObjectId
+      const category = await craftexCategory.findOne({ name: category_uid });
+      if (!category) {
+        return res.status(404).json({ success: false, message: 'Category not found' });
+      }
+      query.craftexCategory = category._id; // Use the ObjectId of the category
+    }
+
+    // Filter by price range
+    if (price_min || price_max) {
+      query.price = {};
+      if (price_min) query.price.$gte = parseFloat(price_min);
+      if (price_max) query.price.$lte = parseFloat(price_max);
+    }
+
+    // Filter by designer
+    if (designer) {
+      query.designer = designer;
+    }
+
+    // Filter by country
+    if (country) {
+      query.country = country;
+    }
+
+    // Filter by material
+    if (material) {
+      query.material = material;
+    }
+
+    // Build the sort object
+    const sortOptions = {};
+    if (sort === 'popularity') {
+      sortOptions.popularity = -1; // Sort by popularity in descending order
+    } else if (sort === 'price_asc') {
+      sortOptions.price = 1; // Sort by price in ascending order
+    } else if (sort === 'price_desc') {
+      sortOptions.price = -1; // Sort by price in descending order
+    }
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Fetch products with filtering, sorting, and pagination
+    const products = await craftexProduct
+      .find(query)
+      .populate('craftexCategory') // Populate the category details
+      .populate('designer')
+      .populate('ratings')
+      .populate('sustainability_metrics')
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count of products (for pagination metadata)
+    const totalProducts = await craftexProduct.countDocuments(query);
+
+    // Send response with products and pagination metadata
+    res.json({
+      success: true,
+      totalProducts,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      products,
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
@@ -54,7 +136,7 @@ router.get('/api/featured-products', async (req, res) => {
 router.post(
   '/api/craftexproducts',
   upload.fields([
-    { name: 'image', maxCount: 1 }, // Main image
+    { name: 'images', maxCount: 5 }, // Allow up to 5 images
     { name: 'thumbnail', maxCount: 1 }, // Thumbnail
   ]),
   [
@@ -64,6 +146,16 @@ router.post(
     body('price').isFloat({ min: 0 }).withMessage('Price must be a non-negative number'),
     body('category').notEmpty().withMessage('Category ID is required'),
     body('isFeatured').optional().isBoolean().withMessage('isFeatured must be a boolean'),
+    body('variants').optional().isArray().withMessage('Variants must be an array'),
+    body('variants.*.name').notEmpty().withMessage('Variant name is required'),
+    body('variants.*.price').isFloat({ min: 0 }).withMessage('Variant price must be a non-negative number'),
+    body('variants.*.stock').isInt({ min: 0 }).withMessage('Variant stock must be a non-negative integer'),
+    body('materials').optional().isArray().withMessage('Materials must be an array'),
+    body('dimensions.length').optional().isFloat({ min: 0 }).withMessage('Length must be a non-negative number'),
+    body('dimensions.width').optional().isFloat({ min: 0 }).withMessage('Width must be a non-negative number'),
+    body('dimensions.height').optional().isFloat({ min: 0 }).withMessage('Height must be a non-negative number'),
+    body('weight').optional().isFloat({ min: 0 }).withMessage('Weight must be a non-negative number'),
+    body('country_of_origin').optional().isString().withMessage('Country of origin must be a string'),
   ],
   async (req, res) => {
     try {
@@ -73,26 +165,37 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { name, description, price, isFeatured, category,designer,stock } = req.body;
+      const { 
+        name, 
+        description, 
+        price, 
+        isFeatured, 
+        category, 
+        designer, 
+        stock, 
+        variants, 
+        materials, 
+        dimensions, 
+        weight, 
+        country_of_origin 
+      } = req.body;
 
       // Validate category
       const existingCategory = await craftexCategory.findById(category);
-      
       if (!existingCategory) {
         return res.status(400).json({ message: 'Invalid category ID' });
       }
 
-
       // Validate user
       const existingdesigner = await craftexUser.findById(designer);
       if (!existingdesigner) {
-        return res.status(400).json({ message: 'Invalid desinger ID' });
+        return res.status(400).json({ message: 'Invalid designer ID' });
       }
 
-      // Get file paths
-      const imageUrl = req.files['image']
-        ? `/uploads/products/${req.files['image'][0].filename}`
-        : null;
+      // Process multiple images
+      const imageUrls = req.files['images']
+        ? req.files['images'].map(file => `/uploads/products/${file.filename}`)
+        : [];
 
       let thumbnailUrl = null;
       if (req.files['thumbnail']) {
@@ -107,10 +210,10 @@ router.post(
 
         // Resize thumbnail using sharp
         await sharp(req.files['thumbnail'][0].path)
-        .resize(150, 150, {
-          fit: 'inside', // Preserve aspect ratio, fit within 150x150
-          withoutEnlargement: true, // Do not enlarge the image if it's smaller than 150x150
-        })
+          .resize(150, 150, {
+            fit: 'inside', // Preserve aspect ratio, fit within 150x150
+            withoutEnlargement: true, // Do not enlarge the image if it's smaller than 150x150
+          })
           .toFile(resizedThumbnailPath); // Save resized image to a new path
 
         thumbnailUrl = `/uploads/products/${req.files['thumbnail'][0].filename.replace(
@@ -118,19 +221,30 @@ router.post(
           '-resized.jpg'
         )}`;
       }
-     
+
+      // Convert attributes to Map if using Map type
+      const processedVariants = variants.map(variant => ({
+        ...variant,
+        attributes: new Map(Object.entries(variant.attributes || {})),
+      }));
+
       // Create new product
       const product = new craftexProduct({
         name,
         description,
-        imageUrl : imageUrl,
+        images: imageUrls, // Save array of image URLs
         thumbnail: thumbnailUrl, // Save thumbnail URL
         price,
         isFeatured: isFeatured || false, // Default to false if not provided
         salesCount: 0, // Initialize sales count to 0
-        craftexCategory : category,
+        craftexCategory: category,
         designer,
-        stock
+        stock,
+        variants: processedVariants, // Save variants if provided
+        materials: materials || [], // Save materials if provided
+        dimensions: dimensions || { length: 0, width: 0, height: 0 }, // Save dimensions if provided
+        weight: weight || 0, // Save weight if provided
+        country_of_origin: country_of_origin || '', // Save country of origin if provided
       });
 
       // Save product to the database
@@ -150,8 +264,31 @@ router.post(
 );
 
 router.put('/api/craftexproducts/:id', async (req, res) => {
+  console.log('Received update request:', req.body); // Debugging log
   try {
-    const updatedProduct = await craftexProduct.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { 
+      variants, 
+      materials, 
+      dimensions, 
+      weight, 
+      country_of_origin, 
+      ...otherUpdates 
+    } = req.body;
+
+    // Update product fields
+    const updatedProduct = await craftexProduct.findByIdAndUpdate(
+      req.params.id,
+      { 
+        ...otherUpdates, 
+        variants: variants || [], // Update variants if provided
+        materials: materials || [], // Update materials if provided
+        dimensions: dimensions || { length: 0, width: 0, height: 0 }, // Update dimensions if provided
+        weight: weight || 0, // Update weight if provided
+        country_of_origin: country_of_origin || '', // Update country of origin if provided
+      },
+      { new: true }
+    );
+
     res.json(updatedProduct);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -177,6 +314,62 @@ router.get('/api/trending-products', async (req, res) => {
   }
 });
 
+
+
+// New route: Filter products by category and limit results
+router.get('/api/craftexproductsbycategory', async (req, res) => {
+  try {
+    const { category_uid, limit } = req.query;
+
+    if (!category_uid) {
+      return res.status(400).json({ message: 'Category UID is required' });
+    }
+
+    // Check if category exists
+    const categoryExists = await craftexCategory.findById(category_uid);
+    if (!categoryExists) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    // Fetch products by category
+    const query = { craftexCategory: category_uid };
+    
+
+    const products = await craftexProduct
+      .find(query)
+      .populate('craftexCategory') // Include category details
+      .limit(limit ? parseInt(limit) : 0) // Apply limit if provided
+      .exec();
+
+    res.status(200).json(products);
+  } catch (err) {
+    console.error('Error fetching products by category:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+router.get('/api/craftexproducts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the product by ID and populate category & designer details
+    const product = await craftexProduct
+      .findById(id)
+      .populate('craftexCategory') // Include category details
+      .populate('designer', 'name email') // Include designer name & email only
+      .populate('sustainability_metrics') // Include sustainability metrics details
+      .populate('ratings') // Include rating details
+      .exec();
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    res.status(200).json(product);
+  } catch (err) {
+    console.error('Error fetching product by ID:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 //------------------------------------------------------ Personalized Products
 router.get('/api/personalized-products', auth, async (req, res) => {
   try {

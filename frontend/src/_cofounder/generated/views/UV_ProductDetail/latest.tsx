@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import axios from 'axios';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Zoom } from 'swiper/modules';
 import { FaStar, FaShoppingCart, FaHeart, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { RootState, AppDispatch, add_to_cart, add_notification } from '@/store/main';
+import baseUrl from '../../../../utils/baseURL.js'
+import axiosInstance from '@/utils/axiosInstance';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -15,12 +16,14 @@ import 'swiper/css/zoom';
 const UV_ProductDetail: React.FC = () => {
   const { product_uid } = useParams<{ product_uid: string }>();
   const dispatch: AppDispatch = useDispatch();
-  const { auth_token } = useSelector((state: RootState) => state.auth);
+  const { auth_token,current_user } = useSelector((state: RootState) => state.auth);
 
   const [product, setProduct] = useState<any>(null);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewRating, setReviewRating] = useState<number>(0);
+  const [reviewComment, setReviewComment] = useState<string>('');
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,9 +31,10 @@ const UV_ProductDetail: React.FC = () => {
   const fetchProductDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:1337/api/products/${product_uid}`);
+      const response = await axiosInstance.get(`/api/craftexproducts/${product_uid}`,);
+     
       setProduct(response.data);
-      setSelectedVariant(response.data.variants[0]);
+      setSelectedVariant(response.data.variants?.[0] || null);
       setLoading(false);
     } catch (err) {
       setError('Failed to load product details. Please try again later.');
@@ -38,9 +42,10 @@ const UV_ProductDetail: React.FC = () => {
     }
   }, [product_uid]);
 
+  // Fetch reviews for the product
   const fetchReviews = useCallback(async () => {
     try {
-      const response = await axios.get(`http://localhost:1337/api/reviews/${product_uid}`);
+      const response = await axiosInstance.get(`/api/craftexreviews/product/${product_uid}`);
       setReviews(response.data.data);
     } catch (err) {
       console.error('Failed to load reviews:', err);
@@ -48,8 +53,9 @@ const UV_ProductDetail: React.FC = () => {
   }, [product_uid]);
 
   const fetchRelatedProducts = useCallback(async () => {
+    if (!product?.craftexCategory) return; // Prevent API call if category is missing
     try {
-      const response = await axios.get(`http://localhost:1337/api/products?category_uid=${product?.category_uid}&limit=4`);
+      const response = await axiosInstance.get(`/api/craftexproductsbycategory?category_uid=${product?.craftexCategory?._id}&limit=4`);
       setRelatedProducts(response.data.products.filter((p: any) => p.uid !== product_uid));
     } catch (err) {
       console.error('Failed to load related products:', err);
@@ -72,8 +78,36 @@ const UV_ProductDetail: React.FC = () => {
   };
 
   const handleQuantityChange = (newQuantity: number) => {
-    setQuantity(Math.max(1, Math.min(newQuantity, selectedVariant.stock_quantity)));
+    if (!selectedVariant) return; // Exit if no variant is selected
+  
+    // Ensure newQuantity is a valid number
+    if (isNaN(newQuantity)) {
+      setQuantity(1); // Reset to 1 if invalid
+      return;
+    }
+  
+    // Clamp the quantity between 1 and the selected variant's stock
+    const clampedQuantity = Math.max(1, Math.min(newQuantity, selectedVariant.stock));
+    setQuantity(clampedQuantity);
   };
+  const addQuantity = () => {
+    if (!selectedVariant) return; // Exit if no variant is selected
+  
+    // Increment the quantity, but ensure it doesn't exceed the stock
+    const newQuantity = quantity + 1;
+    const clampedQuantity = Math.min(newQuantity, selectedVariant.stock);
+    setQuantity(clampedQuantity);
+  };
+
+  const subtractQuantity = () => {
+    if (!selectedVariant) return; // Exit if no variant is selected
+  
+    // Decrement the quantity, but ensure it doesn't go below 1
+    const newQuantity = quantity - 1;
+    const clampedQuantity = Math.max(newQuantity, 1);
+    setQuantity(clampedQuantity);
+  };
+
 
   const handleAddToCart = () => {
     dispatch(add_to_cart({
@@ -98,7 +132,8 @@ const UV_ProductDetail: React.FC = () => {
       return;
     }
     try {
-      await axios.post('http://localhost:1337/api/wishlist', { product_uid: product.uid }, {
+     
+      await axiosInstance.post('/api/wishlist/add', { product_uid: product._id }, {
         headers: { Authorization: `Bearer ${auth_token}` },
       });
       dispatch(add_notification({
@@ -115,6 +150,13 @@ const UV_ProductDetail: React.FC = () => {
     }
   };
 
+
+
+  const loadARView = () => {
+    // Implement AR view logic here
+    console.log('AR view not implemented yet');
+  };
+
   const handleSubmitReview = async (rating: number, comment: string) => {
     if (!auth_token) {
       dispatch(add_notification({
@@ -125,7 +167,8 @@ const UV_ProductDetail: React.FC = () => {
       return;
     }
     try {
-      await axios.post('http://localhost:1337/api/reviews', {
+      await axiosInstance.post('/api/craftexreviews', {
+        user: current_user.id,
         product_uid: product.uid,
         rating,
         comment,
@@ -147,9 +190,12 @@ const UV_ProductDetail: React.FC = () => {
     }
   };
 
-  const loadARView = () => {
-    // Implement AR view logic here
-    console.log('AR view not implemented yet');
+  const handleRatingChange = (rating: number) => {
+    setReviewRating(rating);
+  };
+
+  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setReviewComment(e.target.value);
   };
 
   if (loading) {
@@ -166,10 +212,14 @@ const UV_ProductDetail: React.FC = () => {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-8">
+   
+      <div className="container mx-auto px-4 py-8" style={{paddingTop:'7rem'}}>
+     
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
           {/* Image Gallery */}
           <div className="relative">
+          
             <Swiper
               modules={[Navigation, Pagination, Zoom]}
               navigation
@@ -177,14 +227,17 @@ const UV_ProductDetail: React.FC = () => {
               zoom={{ maxRatio: 3 }}
               className="h-96 bg-gray-100 rounded-lg"
             >
+              
               {product.images.map((image: any, index: number) => (
-                <SwiperSlide key={image.uid}>
+                <SwiperSlide key={index}>
                   <div className="swiper-zoom-container">
                     <img
-                      src={image.image_url}
+                      src={baseUrl + image}
                       alt={`${product.name} - Image ${index + 1}`}
                       className="object-contain w-full h-full"
                     />
+                    
+             
                   </div>
                 </SwiperSlide>
               ))}
@@ -194,7 +247,29 @@ const UV_ProductDetail: React.FC = () => {
           {/* Product Info */}
           <div>
             <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-            <p className="text-2xl font-semibold mb-4">${selectedVariant.price.toFixed(2)}</p>
+            {console.log("variant for price",selectedVariant )}
+            <p className="text-2xl font-semibold mb-4">${selectedVariant?.price.toFixed(2)}</p>
+            
+
+            {/* Existing Reviews */}
+            {reviews.length > 0 && (
+              <div className="mt-8">
+                <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
+                {reviews.map((review) => (
+                  <div key={review.uid} className="bg-gray-100 p-4 rounded">
+                    <div className="flex items-center mb-2">
+                      {[...Array(5)].map((_, index) => (
+                        <FaStar
+                          key={index}
+                          className={index < review.rating ? 'text-yellow-400' : 'text-gray-300'}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-gray-700">{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             
             {/* Variants */}
             {product.variants && product.variants.length > 1 && (
@@ -222,20 +297,27 @@ const UV_ProductDetail: React.FC = () => {
             <div className="flex items-center mb-4">
               <label htmlFor="quantity" className="mr-2">Quantity:</label>
               <button
-                onClick={() => handleQuantityChange(quantity - 1)}
+                onClick={subtractQuantity}
                 className="px-2 py-1 bg-gray-200 rounded-l"
               >
                 -
               </button>
               <input
-                type="number"
-                id="quantity"
-                value={quantity}
-                onChange={(e) => handleQuantityChange(parseInt(e.target.value))}
-                className="w-16 text-center border-t border-b border-gray-200"
-              />
+                  type="number"
+                  id="quantity"
+                  value={quantity}
+                  onChange={(e) => handleQuantityChange(parseInt(e.target.value))}
+                  onBlur={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (isNaN(value)) {
+                      setQuantity(1); // Reset to 1 if invalid
+                    }
+                  }}
+                  className="w-16 text-center border-t border-b border-gray-200"
+                />
+               
               <button
-                onClick={() => handleQuantityChange(quantity + 1)}
+                onClick={addQuantity}
                 className="px-2 py-1 bg-gray-200 rounded-r"
               >
                 +
@@ -265,7 +347,7 @@ const UV_ProductDetail: React.FC = () => {
                 {[...Array(5)].map((_, index) => (
                   <FaStar
                     key={index}
-                    className={index < product.sustainability_score ? 'text-yellow-400' : 'text-gray-300'}
+                    className={index < product.ratings ? 'text-yellow-400' : 'text-gray-300'}
                   />
                 ))}
               </div>
@@ -292,10 +374,10 @@ const UV_ProductDetail: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold mb-2">Specifications:</h3>
               <ul className="list-disc list-inside">
-                <li>Material: {product.materials.join(', ')}</li>
-                <li>Dimensions: {`${product.dimensions.length}L x ${product.dimensions.width}W x ${product.dimensions.height}H`}</li>
-                <li>Weight: {product.weight} kg</li>
-                <li>Country of Origin: {product.country_of_origin}</li>
+                <li>Material: {product?.materials?.join(', ')}</li>
+                <li>Dimensions: {`${product?.dimensions?.length}L x ${product?.dimensions?.width}W x ${product?.dimensions?.height}H`}</li>
+                <li>Weight: {product?.weight} kg</li>
+                <li>Country of Origin: {product?.country_of_origin}</li>
               </ul>
             </div>
           </div>
@@ -307,27 +389,55 @@ const UV_ProductDetail: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="bg-green-100 p-4 rounded">
               <h3 className="font-semibold mb-2">Eco-Friendly Materials:</h3>
-              <p>{product.sustainability_metrics.eco_friendly_materials ? 'Yes' : 'No'}</p>
+              {console.log(product?.sustainability_metrics?.sustainability_metrics,"checking sus")}
+              <p>{product?.sustainability_metrics?.sustainability_metrics?.eco_friendly_materials ? 'Yes' : 'No'}</p>
             </div>
             <div className="bg-blue-100 p-4 rounded">
               <h3 className="font-semibold mb-2">Carbon Footprint:</h3>
-              <p>{product.sustainability_metrics.carbon_footprint} kg CO2e</p>
+              <p>{product?.sustainability_metrics?.sustainability_metrics?.carbon_footprint} kg CO2e</p>
             </div>
             <div className="bg-yellow-100 p-4 rounded">
               <h3 className="font-semibold mb-2">Water Usage:</h3>
-              <p>{product.sustainability_metrics.water_usage} liters</p>
+              <p>{product?.sustainability_metrics?.sustainability_metrics?.water_usage} liters</p>
             </div>
             <div className="bg-purple-100 p-4 rounded">
               <h3 className="font-semibold mb-2">Renewable Energy Used:</h3>
-              <p>{product.sustainability_metrics.renewable_energy_used ? 'Yes' : 'No'}</p>
+              <p>{product?.sustainability_metrics?.sustainability_metrics?.renewable_energy_used ? 'Yes' : 'No'}</p>
             </div>
             <div className="bg-red-100 p-4 rounded">
               <h3 className="font-semibold mb-2">Recyclable Packaging:</h3>
-              <p>{product.sustainability_metrics.recyclable_packaging ? 'Yes' : 'No'}</p>
+              <p>{product?.sustainability_metrics?.sustainability_metrics?.recyclable_packaging ? 'Yes' : 'No'}</p>
             </div>
           </div>
         </div>
 
+                {/* Review Submission */}
+            {reviews.length === 0 && (
+              <div className="mt-8">
+                <h2 className="text-2xl font-bold mb-4">Be the first to review this product!</h2>
+                <div className="flex items-center mb-4">
+                  {[...Array(5)].map((_, index) => (
+                    <FaStar
+                      key={index}
+                      className={index < reviewRating ? 'text-yellow-400 cursor-pointer' : 'text-gray-300 cursor-pointer'}
+                      onClick={() => handleRatingChange(index + 1)}
+                    />
+                  ))}
+                </div>
+                <textarea
+                  placeholder="Write your review here..."
+                  value={reviewComment}
+                  onChange={handleCommentChange}
+                  className="w-full p-2 border rounded"
+                />
+                <button
+                  onClick={() => handleSubmitReview(reviewRating, reviewComment)}
+                  className="mt-4 bg-blue-500 text-white py-2 px-4 rounded"
+                >
+                  Submit Review
+                </button>
+              </div>
+            )}
         {/* Customer Reviews */}
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
@@ -356,7 +466,7 @@ const UV_ProductDetail: React.FC = () => {
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-4">Related Products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {relatedProducts.map((relatedProduct) => (
+            {relatedProducts && relatedProducts.map((relatedProduct) => (
               <Link
                 key={relatedProduct.uid}
                 to={`/product/${relatedProduct.uid}`}

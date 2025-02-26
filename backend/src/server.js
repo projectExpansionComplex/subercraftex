@@ -163,21 +163,9 @@ const craftexprojectsRoutes = require('../routes/craftexprojectsRoutes')
 const craftexreviewsRoutes = require('../routes/craftexreviewsRoutes')
 const craftexsustainabilityRoutes = require('../routes/craftexsustainabilityRoutes')
 const craftexvirtualshowroomsRoutes = require('../routes/craftexvirtualshowroomsRoutes')
+const craftexwishlistRoutes = require('../routes/craftexwishlistRoutes')
 
-//routes
-app.use('/api', require('../routes/authRouter'))
-app.use('/api', require('../routes/userRouter'))
-// Mount routes
-app.use('/api/products', require('../routes/productRoutes'))
-app.use('/api', require('../routes/categoryRouter'));
-app.use('/api/tags', require('../routes/tagRouter'));
-app.use('/api/wishlist', require('../routes/wishlistRoutes'));
-app.use('/api/coupons', require('../routes/couponRoutes'));
-app.use('/api/inventory', require('../routes/inventoryRoutes'));
-app.use('/api/shipping', require('../routes/shippingRoutes'));
-app.use('/api/coming-soon', comingSoonRoutes);
-app.use('/api/subscribe', subscriptionRoutes);
-app.use('/api/announcements', announcementRoutes);
+
 // -----------------subercraftex routes
 app.use('/', craftexProductRoutes);
 
@@ -220,10 +208,24 @@ app.use('/', craftexsustainabilityRoutes);
 //--------------------virtual show room -----------------------
 
 app.use('/', craftexvirtualshowroomsRoutes);
+//--------------------------------------------wishlist------------------------------------
+app.use('/', craftexwishlistRoutes);
 
-
-
-
+//auth routes
+app.use('/api', require('../routes/userRouter'))
+app.use('/api/products', require('../routes/productRoutes'))
+app.use('/api', require('../routes/categoryRouter'));
+app.use('/api/tags', require('../routes/tagRouter'));
+app.use('/api/wishlist', require('../routes/wishlistRoutes'));
+app.use('/api/coupons', require('../routes/couponRoutes'));
+app.use('/api/inventory', require('../routes/inventoryRoutes'));
+app.use('/api/shipping', require('../routes/shippingRoutes'));
+app.use('/api/coming-soon', comingSoonRoutes);
+app.use('/api/subscribe', subscriptionRoutes);
+app.use('/api/announcements', announcementRoutes);
+//routes
+app.use('/api', require('../routes/authRouter'))
+// Mount routes
 
 // Use Error Handler
 app.use(globalErrorHandler);

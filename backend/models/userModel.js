@@ -53,7 +53,13 @@ const UserSchema = new mongoose.Schema({
   country: {type:String},
   city: {type:String},
   state: {type:String},
-  zip: {type:String}
+  zip: {type:String},
+  wishlist: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'craftexProduct', // Reference to the product model
+    },
+  ],
 
 
 },
