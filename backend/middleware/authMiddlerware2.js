@@ -52,36 +52,7 @@ const jwt = require('jsonwebtoken')
   }
 
   // Middleware to authenticate user via JWT
-  exports.auth = async (req, res, next)=>{
-    console.log("auth middleware")
-    console.log(req, "this is the request")
-    try {
-      const token = req.header('Authorization')
-      if(!token){
-        // If the route doesn't require auth (like "Coming Soon"), continue the request
-      return next();  // Move to the next middleware (or route handler)
-      } 
-
-  // Verify the token
-      const decoded_token = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-      if(!decoded_token){
-        res.status(403).json({msg:"Invalid Authentication"})
-        return next(new ErrorResponse("Invalid Authentication", 403))
-      }
-
-        // Find user based on token
-      const user = await Users.findOne({_id:decoded_token.id})
-      if (!user) {
-        return next(new ErrorResponse("User not found", 404));
-      }
-
-      // Attach user data to request
-      req.user = user
-      next()
-    } catch (err) {
-      return res.status(401).json({msg:err.message})
-    }
-  }
+ 
 
 
   // Middleware to authorize user based on role
@@ -130,3 +101,35 @@ exports.restrictTo = (...roles) => {
   
 
 
+exports.auth2 = async (req, res, next) => {
+  console.log('auth2 middleware');
+  try {
+    // Check if the Authorization header exists and starts with "Bearer"
+    const authHeader = req.header('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ msg: 'No token, authorization denied' });
+    }
+
+    // Extract the token from the header
+    const token = authHeader.split(' ')[1]; // Split "Bearer <token>" and get the token
+
+    // Verify the token
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    if (!decodedToken) {
+      return res.status(403).json({ msg: 'Invalid Authentication' });
+    }
+
+    // Find user based on token
+    const user = await Users.findOne({ _id: decodedToken.id });
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    // Attach user data to the request object
+    req.user = user;
+    next();
+  } catch (err) {
+    console.error('Error in auth middleware:', err);
+    return res.status(401).json({ msg: 'Token is not valid' });
+  }
+};

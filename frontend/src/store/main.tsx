@@ -205,6 +205,7 @@ export const login = createAsyncThunk(
        // Extract and map the API response to fit the AuthState structure
        const formattedData = {
         current_user: {
+          id: response.data.user._id,
           uid: response.data.user.uid,
           email: response.data.user.email,
           full_name: `${response.data.user.first_name} ${response.data.user.last_name}`,
@@ -237,7 +238,7 @@ export const logout = createAsyncThunk(
     try {
       await axiosInstance.post('/api/users/logout');
       dispatch(authSlice.actions.clear_auth());
-      
+
       window.location.reload();
     } catch (error) {
       console.error('Logout failed:', error);

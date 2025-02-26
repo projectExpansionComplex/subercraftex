@@ -45,7 +45,7 @@ const App: React.FC = () => {
   const { current_user, auth_token } = useSelector((state: RootState) => state.auth);
   const { is_search_overlay_open } = useSelector((state: RootState) => state.ui);
   const { theme, language } = useSelector((state: RootState) => state.preferences);
-  console.log("this user is authenticated",auth_token)
+  
   useEffect(() => {
     // Initialize WebSocket connection
     dispatch({ type: 'web_socket_connection/connect' });

@@ -126,7 +126,8 @@ const UV_Homepage: React.FC = () => {
   <div className="relative">
     {featuredProducts.map((product, index) => (
       <div key={product._id} className={`carousel-item ${index === activeIndex ? 'block' : 'hidden'}`}>
-        <img src={baseUrl + product.imageUrl} alt={product.name} className="w-full h-96 object-cover" loading="lazy" />
+       
+        <img src={baseUrl + product?.images[0]} alt={product.name} className="w-full h-96 object-cover" loading="lazy" />
         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4">
           <h2 className="text-2xl font-bold">{product.name}</h2>
           <p className="text-lg">{product.description}</p>
@@ -193,7 +194,7 @@ const UV_Homepage: React.FC = () => {
   <h2 className="text-2xl font-bold mb-4 text-[#1F2937]">Latest from the Blog</h2>
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {latestBlogPosts.map((post) => (
-      <Link key={post.id} to={`/blog/${post.id}`} className="blog-post-card">
+      <Link key={post._id} to={`/blog/${post.id}`} className="blog-post-card">
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <img src={baseUrl + post.imageUrl} alt={post.title} className="w-full h-48 object-cover" loading="lazy" />
           <div className="p-4">
@@ -212,7 +213,7 @@ const UV_Homepage: React.FC = () => {
   <h2 className="text-2xl font-bold mb-4 text-[#1F2937]">Trending Now</h2>
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {trendingProducts.map((product) => (
-      <Link key={product.id} to={`/product/${product._id}`} className="product-card">
+      <Link key={product._id} to={`/product/${product._id}`} className="product-card">
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <img src={baseUrl + product.thumbnail} alt={product.name} className="w-full h-48 object-cover" loading="lazy" />
           <div className="p-4">

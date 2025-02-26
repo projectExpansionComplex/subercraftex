@@ -49,6 +49,28 @@ router.get('/api/category-products', async (req, res) => {
   }
 });
 
+// GET route to filter categories by name using a route parameter
+router.get('/api/craftexcategories/filter/:name', async (req, res) => {
+  console.log("I hit this endpoint");
+  try {
+    const { name } = req.params; // Get the name from route parameters
+
+    if (!name) {
+      return res.status(400).json({ message: 'Name parameter is required' });
+    }
+
+    // Use a regex to perform a case-insensitive search for the name
+    const categories = await craftexCategory.find({ name: { $regex: name, $options: 'i' } });
+
+    if (categories.length === 0) {
+      return res.status(404).json({ message: 'No categories found with the given name' });
+    }
+
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 // POST route to create a new category
 router.post(
   '/api/craftexcategories',

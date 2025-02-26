@@ -4,8 +4,8 @@ const authMiddleware = require('../middleware/authMiddlerware'); // Protect rout
 
 const router = express.Router();
 
-router.post('/', authMiddleware.protect, wishlistController.addToWishlist);
-router.get('/', authMiddleware.protect, wishlistController.getWishlist);
-router.delete('/', authMiddleware.protect, wishlistController.removeFromWishlist);
+// router.post('/', authMiddleware.protect, wishlistController.addToWishlist);
+// router.get('/', authMiddleware.protect, wishlistController.getWishlist);
+// router.delete('/', authMiddleware.protect, wishlistController.removeFromWishlist);
 
 module.exports = router;
