@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch, add_notification } from '@/store/main';
-import axios from 'axios';
 import { format } from 'date-fns';
 import { StarIcon, PlayIcon, XIcon } from '@heroicons/react/solid';
+import axiosInstance from '@/utils/axiosInstance';
+import baseUrl from '../../../../utils/baseURL.js'
+
 
 const UV_DesignerProfile: React.FC = () => {
   const { designerUid } = useParams<{ designerUid: string }>();
@@ -28,9 +30,10 @@ const UV_DesignerProfile: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`http://localhost:1337/api/designers/${designerUid}`, {
+        const response = await axiosInstance.get(`/api/craftexdesigners/${designerUid}`, {
           headers: { Authorization: `Bearer ${auth_token}` }
         });
+        
         setDesignerData(response.data.designer);
         setDesignerPortfolio(response.data.portfolio);
         setDesignerProducts(response.data.products);
@@ -49,6 +52,7 @@ const UV_DesignerProfile: React.FC = () => {
     };
 
     fetchDesignerData();
+   
   }, [designerUid, auth_token, dispatch]);
 
   const toggleVideoModal = (videoUrl: string = "") => {
@@ -70,7 +74,7 @@ const UV_DesignerProfile: React.FC = () => {
 
   const submitReview = async (rating: number, comment: string) => {
     try {
-      await axios.post(`http://localhost:1337/api/designers/${designerUid}/reviews`, {
+      await axiosInstance.post(`/api/craftexdesigners/${designerUid}/reviews`, {
         rating,
         comment
       }, {
@@ -82,7 +86,7 @@ const UV_DesignerProfile: React.FC = () => {
         message: 'Review submitted successfully.'
       }));
       // Refresh reviews
-      const reviewsResponse = await axios.get(`http://localhost:1337/api/designers/${designerUid}/reviews`);
+      const reviewsResponse = await axiosInstance.get(`/api/craftexdesigners/${designerUid}/reviews`);
       setReviews(reviewsResponse.data);
     } catch (err) {
       dispatch(add_notification({
@@ -95,7 +99,7 @@ const UV_DesignerProfile: React.FC = () => {
 
   const fetchConsultationSlots = async () => {
     try {
-      const response = await axios.get(`http://localhost:1337/api/designers/${designerUid}/consultation-slots`, {
+      const response = await axiosInstance.get(`/api/craftexdesigners/${designerUid}/consultation-slots`, {
         headers: { Authorization: `Bearer ${auth_token}` }
       });
       setAvailableConsultationSlots(response.data);
@@ -110,7 +114,7 @@ const UV_DesignerProfile: React.FC = () => {
 
   const bookConsultation = async (slotId: string) => {
     try {
-      await axios.post(`http://localhost:1337/api/consultations`, {
+      await axiosInstance.post(`/api/consultations`, {
         designerUid,
         slotId
       }, {
@@ -134,7 +138,7 @@ const UV_DesignerProfile: React.FC = () => {
 
   const followDesigner = async () => {
     try {
-      await axios.post(`http://localhost:1337/api/designers/${designerUid}/follow`, {}, {
+      await axiosInstance.post(`/api/craftexdesigners/${designerUid}/follow`, {}, {
         headers: { Authorization: `Bearer ${auth_token}` }
       });
       dispatch(add_notification({
@@ -155,7 +159,7 @@ const UV_DesignerProfile: React.FC = () => {
 
   const initiateChat = async () => {
     try {
-      const response = await axios.post(`http://localhost:1337/api/chats`, {
+      const response = await axiosInstance.post(`/api/chats`, {
         recipientUid: designerUid
       }, {
         headers: { Authorization: `Bearer ${auth_token}` }
@@ -171,6 +175,8 @@ const UV_DesignerProfile: React.FC = () => {
     }
   };
 
+
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
@@ -184,6 +190,7 @@ const UV_DesignerProfile: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Designer Header */}
         <div className="relative">
+         
           <img src={designerData.coverImageUrl} alt="Cover" className="w-full h-64 object-cover rounded-lg" />
           <img src={designerData.profileImageUrl} alt={designerData.name} className="absolute bottom-0 left-8 -mb-16 w-32 h-32 rounded-full border-4 border-white" />
         </div>

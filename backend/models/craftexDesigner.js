@@ -16,6 +16,7 @@ const craftexdesignerSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now }, // Timestamp of the review
     },
   ],
+  location: { type: String }, // Add this field for location filtering
   createdAt: { type: Date, default: Date.now }, // Timestamp of designer profile creation
 });
 

@@ -234,18 +234,59 @@ router.post(
 // CRUD Operations for Designers
 router.get('/api/designers', async (req, res) => {
   try {
-    const designers = await craftexDesigner.find();
-    res.json(designers);
+    const { page = 1, limit = 10, sort, specialties, location, rating, search } = req.query;
+
+    // Build the query object for filtering
+    const query = {};
+
+    if (specialties) {
+      query.specialty = { $in: specialties.split(',') }; // Filter by specialties
+    }
+
+    if (location && location !== 'all') {
+      query.location = location; // Filter by location (if not "all")
+    }
+
+    if (rating) {
+      query.rating = { $gte: Number(rating) }; // Filter by minimum rating
+    }
+
+    if (search) {
+      query.name = { $regex: search, $options: 'i' }; // Case-insensitive search by name
+    }
+
+    // Fetch designers with pagination, sorting, and filtering
+    const designers = await craftexDesigner
+      .find(query)
+      .sort(sort || '-createdAt') // Default sort by newest first
+      .skip((page - 1) * limit) // Pagination
+      .limit(Number(limit))
+      .populate('user', 'username email'); // Populate user details if needed
+
+    // Get total count of designers for pagination
+    const totalCount = await craftexDesigner.countDocuments(query);
+
+    // Return the response in the expected format
+    res.json({
+      designers,
+      total_count: totalCount,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalCount / limit),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
 // 3. Featured Designers
-router.get('/api/featured-designers', async (req, res) => {
+router.get('/api/designers/featured', async (req, res) => {
   try {
+    // Fetch featured designers
     const featuredDesigners = await craftexDesigner.find({ isFeatured: true });
-    res.json(featuredDesigners);
+
+    // Return the response in the expected format
+    res.json({
+      featured_designers: featuredDesigners, // Wrap the data in a `featured_designers` field
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

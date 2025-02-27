@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { RootState, AppDispatch, add_notification } from '@/store/main';
-import axios from 'axios';
+
 import { debounce } from 'lodash';
 import { Moon, Sun, Search, ChevronLeft, ChevronRight, Star, MapPin, Briefcase } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Progress } from "@/components/ui/progress";
+import axiosInstance from '@/utils/axiosInstance';
+import baseUrl from '../../../../utils/baseURL.js'
 
 interface Designer {
   uid: string;
@@ -54,7 +56,7 @@ const UV_DesignerListing: React.FC = () => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await axios.get('http://localhost:1337/api/designers', {
+      const response = await axiosInstance.get('/api/designers', {
         params: {
           page: currentPage,
           limit: itemsPerPage,
@@ -66,6 +68,7 @@ const UV_DesignerListing: React.FC = () => {
         },
         headers: auth_token ? { Authorization: `Bearer ${auth_token}` } : {},
       });
+
       setDesigners(response.data.designers);
       setTotalDesigners(response.data.total_count);
     } catch (err) {
@@ -81,7 +84,7 @@ const UV_DesignerListing: React.FC = () => {
 
   const fetchFeaturedDesigners = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:1337/api/designers/featured', {
+      const response = await axiosInstance.get('/api/designers/featured', {
         headers: auth_token ? { Authorization: `Bearer ${auth_token}` } : {},
       });
       setFeaturedDesigners(response.data.featured_designers);
@@ -140,19 +143,19 @@ const UV_DesignerListing: React.FC = () => {
         </div>
 
         <p className="text-xl mb-8">Discover talented designers from around the world</p>
-
-        {featuredDesigners.length > 0 && (
+      
+        {featuredDesigners?.length > 0 && (
           <section className="mb-12">
             <h2 className="text-3xl font-semibold mb-6 font-serif">Featured Designers</h2>
             <Carousel>
               <CarouselContent>
-                {featuredDesigners.map((designer) => (
-                  <CarouselItem key={designer.uid} className="md:basis-1/2 lg:basis-1/3">
+                {featuredDesigners?.map((designer) => (
+                  <CarouselItem key={designer._id} className="md:basis-1/2 lg:basis-1/3">
                     <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                      <img src={designer.featuredDesignUrl} alt={`Featured design by ${designer.name}`} className="w-full h-48 object-cover rounded-lg mb-4" />
+                      <img src={baseUrl + designer.featuredDesignUrl} alt={`Featured design by ${designer.name}`} className="w-full h-48 object-cover rounded-lg mb-4" />
                       <div className="flex items-center mb-4">
                         <Avatar className="h-16 w-16 mr-4">
-                          <AvatarImage src={designer.profileImageUrl} alt={designer.name} />
+                          <AvatarImage src={baseUrl + designer.profileImageUrl} alt={designer.name} />
                           <AvatarFallback>{designer.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -195,15 +198,20 @@ const UV_DesignerListing: React.FC = () => {
             </Select>
           </div>
           <div className="flex flex-wrap gap-4">
-            <Select value={filters.location} onValueChange={(value) => handleFilterChange('location', value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Locations</SelectItem>
-                {/* Add location options */}
-              </SelectContent>
-            </Select>
+            
+
+<Select value={filters.location} onValueChange={(value) => handleFilterChange('location', value)}>
+  <SelectTrigger className="w-[180px]">
+    <SelectValue placeholder="Location" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">All Locations</SelectItem> {/* Use "all" instead of "" */}
+    <SelectItem value="New York">New York</SelectItem>
+    <SelectItem value="London">London</SelectItem>
+    <SelectItem value="Paris">Paris</SelectItem>
+    {/* Add more location options */}
+  </SelectContent>
+</Select>
             <Select value={filters.rating.toString()} onValueChange={(value) => handleFilterChange('rating', parseInt(value))}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Rating" />
@@ -227,13 +235,14 @@ const UV_DesignerListing: React.FC = () => {
           <div className="text-center py-12 text-red-600">{error}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {designers.map((designer) => (
-              <div key={designer.uid} className={`rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white shadow'}`}>
-                <img src={designer.featuredDesignUrl} alt={`Featured design by ${designer.name}`} className="w-full h-48 object-cover" />
+            {designers?.map((designer) => (
+              <div key={designer._id} className={`rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white shadow'}`}>
+                
+                <img src={baseUrl + designer.avatar} alt={`Featured design by ${designer.name}`} className="w-full h-48 object-cover" />
                 <div className="p-6">
                   <div className="flex items-center mb-4">
                     <Avatar className="h-12 w-12 mr-4">
-                      <AvatarImage src={designer.profileImageUrl} alt={designer.name} />
+                      <AvatarImage src={baseUrl + designer.profileImageUrl} alt={designer.name} />
                       <AvatarFallback>{designer.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
@@ -248,7 +257,7 @@ const UV_DesignerListing: React.FC = () => {
                     <span className="ml-2 text-sm">({designer.rating.toFixed(1)})</span>
                   </div>
                   <div className="mb-4">
-                    {designer.specialties.map((specialty, index) => (
+                    {designer?.specialties?.map((specialty, index) => (
                       <Badge key={index} variant="secondary" className="mr-2 mb-2">{specialty}</Badge>
                     ))}
                   </div>
@@ -256,7 +265,7 @@ const UV_DesignerListing: React.FC = () => {
                     <Briefcase className="w-4 h-4 mr-1" /> {designer.designCount} designs
                   </p>
                   <div className="flex justify-between items-center">
-                    <Link to={`/designer/${designer.uid}`}>
+                    <Link to={`/designer/${designer._id}`}>
                       <Button variant="outline">View Profile</Button>
                     </Link>
                     <Button onClick={() => handleQuickContact(designer.uid)}>
