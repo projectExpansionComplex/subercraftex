@@ -376,7 +376,7 @@ const UV_CategoryListing: React.FC = () => {
                 </svg>
               </button>
             </div>
-            {console.log(quickViewProduct,"quickViewProduct.thumbnail")}
+
             <img src={baseUrl + quickViewProduct.thumbnail} alt={quickViewProduct.name} className="w-full h-64 object-cover mb-4 rounded" />
             <p className="text-gray-600 mb-2">{quickViewProduct.designer.first_name} {quickViewProduct.designer.last_name}</p>
             <p className="text-xl font-bold mb-4" style={{color:"#374151"}}>${quickViewProduct.price.toFixed(2)}</p>
