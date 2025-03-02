@@ -5,7 +5,7 @@ const router = express.Router();
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
 const craftexUser = require('../models/userModel')
-const craftexCustomRequest = require('../models/craftexCustomRequest')
+const craftexCategory = require('../models/craftexCategory')
 const path = require('path')
 const sharp = require('sharp');
 // Multer configuration for file blogpost
@@ -39,6 +39,11 @@ router.post(
     body('user').notEmpty().withMessage('User ID is required'),
     body('designer').optional().isMongoId().withMessage('Invalid Designer ID'),
     body('status').optional().isIn(['open', 'in-progress', 'completed']).withMessage('Invalid status'),
+    body('budget_min').isNumeric().withMessage('Minimum budget must be a number'),
+    body('budget_max').isNumeric().withMessage('Maximum budget must be a number'),
+    body('deadline').isISO8601().withMessage('Invalid deadline format'),
+    body('skills').isArray().withMessage('Skills must be an array'),
+    body('category_uid').isMongoId().withMessage('Invalid category ID'),
   ],
   async (req, res) => {
     try {
@@ -47,7 +52,7 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { title, description, user, designer, status } = req.body;
+      const { title, description, user, designer, status, budget_min, budget_max, deadline, skills, category_uid } = req.body;
 
       // Validate user
       const existingUser = await craftexUser.findById(user);
@@ -63,12 +68,23 @@ router.post(
         }
       }
 
+      // Validate category
+      const existingCategory = await craftexCategory.findById(category_uid);
+      if (!existingCategory) {
+        return res.status(400).json({ message: 'Invalid category ID' });
+      }
+
       const newProject = new craftexProject({
         title,
         description,
         user,
         designer,
         status,
+        budget_min,
+        budget_max,
+        deadline,
+        skills,
+        category_uid,
       });
 
       const savedProject = await newProject.save();
@@ -79,14 +95,46 @@ router.post(
     }
   }
 );
-
 //GET Route to Fetch All Projects
 router.get('/api/craftexprojects', async (req, res) => {
   try {
-    const projects = await craftexProject.find()
+    const { status, category_uid, budget_min, budget_max, skills, sort, page } = req.query;
+
+    // Build the filter object
+    const filter = {};
+    if (status) filter.status = status;
+    if (category_uid) filter.category_uid = category_uid;
+    if (budget_min) filter.budget_min = { $gte: Number(budget_min) };
+    if (budget_max) filter.budget_max = { $lte: Number(budget_max) };
+    if (skills) filter.skills = { $in: skills.split(',') };
+
+    // Build the sort object
+    const sortOptions = {};
+    if (sort === 'created_at_desc') sortOptions.createdAt = -1;
+    if (sort === 'created_at_asc') sortOptions.createdAt = 1;
+    if (sort === 'budget_max_desc') sortOptions.budget_max = -1;
+    if (sort === 'budget_max_asc') sortOptions.budget_max = 1;
+
+    // Pagination
+    const pageSize = 10; // Number of projects per page
+    const currentPage = Number(page) || 1;
+    const skip = (currentPage - 1) * pageSize;
+
+    const totalProjects = await craftexProject.countDocuments(filter);
+    const totalPages = Math.ceil(totalProjects / pageSize);
+
+    const projects = await craftexProject.find(filter)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(pageSize)
       .populate('user', 'name email')
-      .populate('designer', 'name email');
-    res.status(200).json(projects);
+      .populate('designer', 'name email')
+      .populate('category_uid', 'name'); // Populate category_uid with category name
+
+    res.status(200).json({
+      projects,
+      total_pages: totalPages,
+    });
   } catch (err) {
     console.error('Error fetching projects:', err);
     res.status(500).json({ message: 'Internal server error' });
@@ -119,6 +167,11 @@ router.put(
     body('description').optional().notEmpty().withMessage('Description cannot be empty'),
     body('designer').optional().isMongoId().withMessage('Invalid Designer ID'),
     body('status').optional().isIn(['open', 'in-progress', 'completed']).withMessage('Invalid status'),
+    body('budget_min').optional().isNumeric().withMessage('Minimum budget must be a number'),
+    body('budget_max').optional().isNumeric().withMessage('Maximum budget must be a number'),
+    body('deadline').optional().isISO8601().withMessage('Invalid deadline format'),
+    body('skills').optional().isArray().withMessage('Skills must be an array'),
+    body('category_uid').optional().isMongoId().withMessage('Invalid category ID'),
   ],
   async (req, res) => {
     try {
@@ -127,7 +180,7 @@ router.put(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { title, description, designer, status } = req.body;
+      const { title, description, designer, status, budget_min, budget_max, deadline, skills, category_uid } = req.body;
 
       const project = await craftexProject.findById(req.params.id);
       if (!project) {
@@ -144,6 +197,17 @@ router.put(
         project.designer = designer;
       }
       if (status) project.status = status;
+      if (budget_min) project.budget_min = budget_min;
+      if (budget_max) project.budget_max = budget_max;
+      if (deadline) project.deadline = deadline;
+      if (skills) project.skills = skills;
+      if (category_uid) {
+        const existingCategory = await craftexCategory.findById(category_uid);
+        if (!existingCategory) {
+          return res.status(400).json({ message: 'Invalid category ID' });
+        }
+        project.category_uid = category_uid;
+      }
 
       const updatedProject = await project.save();
       res.status(200).json(updatedProject);

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { RootState, AppDispatch, add_notification } from '@/store/main';
-import axios from 'axios';
 import debounce from 'lodash/debounce';
 import { ChevronDown, Grid, List, Loader, BookmarkPlus, BookmarkMinus, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import baseUrl from '../../../../utils/baseURL.js'
+import axiosInstance from '@/utils/axiosInstance';
 
 const UV_ProjectListing: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -27,14 +28,15 @@ const UV_ProjectListing: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [categories, setCategories] = useState<any[]>([]); // Initialize as an empty array  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [savedProjects, setSavedProjects] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
 
   const fetchProjects = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get('http://localhost:1337/api/projects', {
+      const response = await axiosInstance.get('/api/craftexprojects', {
         params: {
           ...filters,
           sort: sortOption,
@@ -55,9 +57,12 @@ const UV_ProjectListing: React.FC = () => {
       setIsLoading(false);
     }
   }, [filters, sortOption, currentPage, auth_token, dispatch]);
-
-  const debouncedFetchProjects = debounce(fetchProjects, 300);
-
+  
+  // Use useCallback to stabilize debouncedFetchProjects
+  const debouncedFetchProjects = useCallback(
+    debounce(() => fetchProjects(), 300),
+    [fetchProjects] // Only recreate debouncedFetchProjects when fetchProjects changes
+  );
   useEffect(() => {
     debouncedFetchProjects();
     return () => debouncedFetchProjects.cancel();
@@ -66,14 +71,16 @@ const UV_ProjectListing: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:1337/api/project-categories');
-        setCategories(response.data);
+        const response = await axiosInstance.get('/api/craftexcategories-all');
+        setCategories(response.data.categories);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
     };
     fetchCategories();
   }, []);
+
+ 
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -99,7 +106,7 @@ const UV_ProjectListing: React.FC = () => {
       return;
     }
     try {
-      await axios.post(`http://localhost:1337/api/projects/${projectId}/applications`, {}, {
+      await axiosInstance.post(`/api/craftexprojects/${projectId}/applications`, {}, {
         headers: { Authorization: `Bearer ${auth_token}` },
       });
       dispatch(add_notification({
@@ -129,7 +136,7 @@ const UV_ProjectListing: React.FC = () => {
     }
     try {
       if (savedProjects.includes(projectId)) {
-        await axios.delete(`http://localhost:1337/api/users/${current_user.uid}/saved-projects/${projectId}`, {
+        await axiosInstance.delete(`/api/craftexusers/${current_user._id}/saved-projects/${projectId}`, {
           headers: { Authorization: `Bearer ${auth_token}` },
         });
         setSavedProjects(prev => prev.filter(id => id !== projectId));
@@ -139,7 +146,7 @@ const UV_ProjectListing: React.FC = () => {
           message: 'Project removed from saved list.',
         }));
       } else {
-        await axios.post(`http://localhost:1337/api/users/${current_user.uid}/saved-projects/${projectId}`, {}, {
+        await axiosInstance.post(`/api/craftexusers/${current_user._id}/saved-projects/${projectId}`, {}, {
           headers: { Authorization: `Bearer ${auth_token}` },
         });
         setSavedProjects(prev => [...prev, projectId]);
@@ -161,34 +168,35 @@ const UV_ProjectListing: React.FC = () => {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-8">
+    <div style={{backgroundColor: '#cbced1'}}>
+      <div className="container mx-auto px-4 py-8" style={{paddingTop: '8rem'}}>
         <h1 className="text-4xl font-bold mb-8 text-gray-900">Browse Projects</h1>
         
         <div className="mb-8 bg-white rounded-lg shadow-md p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Select value={filters.category_uid || ''} onValueChange={(value) => handleFilterChange('category_uid', value || null)}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.uid} value={category.uid}>{category.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <Select value={filters.category_uid || ''} onValueChange={(value) => handleFilterChange('category_uid', value === 'all' ? null : value)}>
+  <SelectTrigger>
+    <SelectValue placeholder="All Categories" className="text-gray-700"/>
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all" className="text-gray-700">All Categories</SelectItem> {/* Fixed: Non-empty value */}
+    {categories?.map((category) => (
+      <SelectItem key={category._id} value={category._id} className="text-gray-700">{category.name}</SelectItem>
+    ))}
+  </SelectContent>
+</Select>
 
-            <Select value={filters.status || ''} onValueChange={(value) => handleFilterChange('status', value || null)}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
+<Select style={{color:"black"}} value={filters.status || ''} onValueChange={(value) => handleFilterChange('status', value === 'all' ? null : value)}>
+  <SelectTrigger>
+    <SelectValue placeholder="All Statuses" className="text-gray-700"/>
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all" className="text-gray-700">All Statuses</SelectItem> {/* Fixed: Non-empty value */}
+    <SelectItem value="open" className="text-gray-700">Open</SelectItem>
+    <SelectItem value="in_progress" className="text-gray-700">In Progress</SelectItem>
+    <SelectItem value="completed" className="text-gray-700">Completed</SelectItem>
+  </SelectContent>
+</Select>
 
             <Input
               type="number"
@@ -206,17 +214,17 @@ const UV_ProjectListing: React.FC = () => {
               className="w-full"
             />
 
-            <Select value={sortOption} onValueChange={handleSortChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort By" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="created_at_desc">Newest First</SelectItem>
-                <SelectItem value="created_at_asc">Oldest First</SelectItem>
-                <SelectItem value="budget_max_desc">Highest Budget</SelectItem>
-                <SelectItem value="budget_max_asc">Lowest Budget</SelectItem>
-              </SelectContent>
-            </Select>
+<Select value={sortOption} onValueChange={handleSortChange}>
+  <SelectTrigger>
+    <SelectValue placeholder="Sort By" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="created_at_desc">Newest First</SelectItem>
+    <SelectItem value="created_at_asc">Oldest First</SelectItem>
+    <SelectItem value="budget_max_desc">Highest Budget</SelectItem>
+    <SelectItem value="budget_max_asc">Lowest Budget</SelectItem>
+  </SelectContent>
+</Select>
           </div>
         </div>
 
@@ -243,7 +251,7 @@ const UV_ProjectListing: React.FC = () => {
             ) : (
               <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'grid-cols-1 gap-4'}`}>
                 {projects.map((project) => (
-                  <div key={project.uid} className={`bg-white rounded-lg shadow-md overflow-hidden ${viewMode === 'grid' ? 'flex flex-col' : 'flex flex-row'}`}>
+                  <div key={project._id} className={`bg-white rounded-lg shadow-md overflow-hidden ${viewMode === 'grid' ? 'flex flex-col' : 'flex flex-row'}`}>
                     <div className={`p-6 ${viewMode === 'grid' ? 'flex-grow' : 'flex-grow w-2/3'}`}>
                       <h3 className="text-xl font-semibold mb-2 text-gray-900">{project.title}</h3>
                       <p className="text-gray-600 mb-4">{project.description}</p>
@@ -264,24 +272,24 @@ const UV_ProjectListing: React.FC = () => {
                     </div>
                     <div className={`p-6 bg-gray-50 ${viewMode === 'grid' ? '' : 'w-1/3 flex flex-col justify-center'}`}>
                       <Button
-                        onClick={() => handleQuickApply(project.uid)}
+                        onClick={() => handleQuickApply(project._id)}
                         className="w-full mb-2"
                       >
                         Quick Apply
                       </Button>
                       <Button
-                        onClick={() => handleSaveProject(project.uid)}
+                        onClick={() => handleSaveProject(project._id)}
                         variant="outline"
                         className="w-full mb-2"
                       >
-                        {savedProjects.includes(project.uid) ? (
+                        {savedProjects.includes(project._id) ? (
                           <><BookmarkMinus className="mr-2 h-4 w-4" /> Unsave</>
                         ) : (
                           <><BookmarkPlus className="mr-2 h-4 w-4" /> Save</>
                         )}
                       </Button>
                       <Link
-                        to={`/project/${project.uid}`}
+                        to={`/project/${project._id}`}
                         className="block text-center text-blue-500 hover:underline"
                       >
                         View Details <ArrowRight className="inline-block ml-1 h-4 w-4" />
@@ -322,6 +330,7 @@ const UV_ProjectListing: React.FC = () => {
             )}
           </>
         )}
+      </div>
       </div>
     </>
   );

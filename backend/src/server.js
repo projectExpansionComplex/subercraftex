@@ -164,6 +164,7 @@ const craftexreviewsRoutes = require('../routes/craftexreviewsRoutes')
 const craftexsustainabilityRoutes = require('../routes/craftexsustainabilityRoutes')
 const craftexvirtualshowroomsRoutes = require('../routes/craftexvirtualshowroomsRoutes')
 const craftexwishlistRoutes = require('../routes/craftexwishlistRoutes')
+const craftexuserRoutes = require('../routes/craftexuserRoutes')
 
 
 // -----------------subercraftex routes
@@ -210,6 +211,7 @@ app.use('/', craftexsustainabilityRoutes);
 app.use('/', craftexvirtualshowroomsRoutes);
 //--------------------------------------------wishlist------------------------------------
 app.use('/', craftexwishlistRoutes);
+app.use('/', craftexuserRoutes);
 
 //auth routes
 app.use('/api', require('../routes/userRouter'))

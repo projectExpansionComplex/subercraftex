@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import axios from 'axios';
 import { RootState, AppDispatch, add_to_cart, add_notification } from '@/store/main';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
@@ -17,6 +16,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import axiosInstance from '@/utils/axiosInstance';
+import baseUrl from '../../../../utils/baseURL.js'
+
 
 const UV_DesignDetail: React.FC = () => {
   const { designUid } = useParams<{ designUid: string }>();
@@ -39,11 +41,11 @@ const UV_DesignDetail: React.FC = () => {
     setError(null);
     try {
       const [designResponse, relatedResponse, reviewsResponse] = await Promise.all([
-        axios.get(`http://localhost:1337/api/designs/${designUid}`, {
+        axiosInstance.get(`/api/designs/${designUid}`, {
           headers: { Authorization: `Bearer ${auth_token}` }
         }),
-        axios.get(`http://localhost:1337/api/designs/${designUid}/related`),
-        axios.get(`http://localhost:1337/api/designs/${designUid}/reviews`)
+        axiosInstance.get(`/api/designs/${designUid}/related`),
+        axiosInstance.get(`/api/designs/${designUid}/reviews`)
       ]);
 
       setDesignData(designResponse.data);
@@ -77,7 +79,7 @@ const UV_DesignDetail: React.FC = () => {
 
   const addToCart = async () => {
     try {
-      await axios.post('http://localhost:1337/api/cart', {
+      await axiosInstance.post('/api/cart', {
         design_uid: designUid,
         quantity
       }, {
@@ -101,7 +103,7 @@ const UV_DesignDetail: React.FC = () => {
 
   const requestCustomOrder = async () => {
     try {
-      await axios.post('http://localhost:1337/api/custom-orders', {
+      await axiosInstance.post('/api/custom-orders', {
         design_uid: designUid
       }, {
         headers: { Authorization: `Bearer ${auth_token}` }
@@ -123,7 +125,7 @@ const UV_DesignDetail: React.FC = () => {
 
   const submitReview = async (rating: number, comment: string) => {
     try {
-      const response = await axios.post(`http://localhost:1337/api/designs/${designUid}/reviews`, {
+      const response = await axiosInstance.post(`/api/designs/${designUid}/reviews`, {
         rating,
         comment
       }, {
@@ -147,7 +149,7 @@ const UV_DesignDetail: React.FC = () => {
 
   const reportInappropriateContent = async (contentType: 'design' | 'review', contentId: string) => {
     try {
-      await axios.post('http://localhost:1337/api/report', {
+      await axiosInstance.post('/api/report', {
         content_type: contentType,
         content_id: contentId
       }, {
