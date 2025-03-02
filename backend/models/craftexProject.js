@@ -6,6 +6,11 @@ const craftexprojectSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true }, // Reference to the user who posted the project
   designer: { type: mongoose.Schema.Types.ObjectId, ref: 'Designer' }, // Reference to the assigned designer
   status: { type: String, enum: ['open', 'in-progress', 'completed'], default: 'open' }, // Project status
+  budget_min: { type: Number, required: true }, // Minimum budget
+  budget_max: { type: Number, required: true }, // Maximum budget
+  deadline: { type: Date, required: true }, // Project deadline
+  skills: [{ type: String }], // Required skills for the project
+  category_uid: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' }, // Reference to the project category
   bids: [
     {
       user: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true }, // Reference to the user who placed the bid

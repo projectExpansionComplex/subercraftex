@@ -54,6 +54,8 @@ const UserSchema = new mongoose.Schema({
   city: {type:String},
   state: {type:String},
   zip: {type:String},
+  savedProjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'craftexProject' }], // Array of saved projects
+  isDeleted: { type: Boolean, default: false }, // Soft delete flag
   wishlist: [
     {
       type: mongoose.Schema.Types.ObjectId,
