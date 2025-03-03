@@ -22,12 +22,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import baseUrl from '../../../../utils/baseURL.js'
+import axiosInstance from '@/utils/axiosInstance';
+
+
 
 const UV_Shop: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
-
+  const [products2,setProducts2] = useState([])
   const [products, set_products] = useState<any[]>([]);
   const [categories, set_categories] = useState<any[]>([]);
   const [is_loading, set_is_loading] = useState(true);
@@ -45,17 +49,20 @@ const UV_Shop: React.FC = () => {
   const [search_query, set_search_query] = useState('');
 
   const { auth_token } = useSelector((state: RootState) => state.auth);
+useEffect(()=>{
+  fetch_categories();
+},[])
 
   useEffect(() => {
-    fetch_categories();
+    // fetch_categories();
     const search_params = new URLSearchParams(location.search);
-    const initial_filters = {
-      category_uid: search_params.get('category') || null,
-      price_min: search_params.get('price_min') ? Number(search_params.get('price_min')) : null,
-      price_max: search_params.get('price_max') ? Number(search_params.get('price_max')) : null,
-      rating: search_params.get('rating') ? Number(search_params.get('rating')) : null,
-    };
-    set_filters(initial_filters);
+    // const initial_filters = {
+    //   category_uid: search_params.get('category') || null,
+    //   price_min: search_params.get('price_min') ? Number(search_params.get('price_min')) : null,
+    //   price_max: search_params.get('price_max') ? Number(search_params.get('price_max')) : null,
+    //   rating: search_params.get('rating') ? Number(search_params.get('rating')) : null,
+    // };
+    // set_filters(initial_filters);
     set_sort_option(search_params.get('sort') || 'created_at_desc');
     set_current_page(Number(search_params.get('page')) || 1);
     set_search_query(search_params.get('search') || '');
@@ -67,8 +74,8 @@ const UV_Shop: React.FC = () => {
 
   const fetch_categories = async () => {
     try {
-      const response = await axios.get('http://localhost:1337/api/product-categories');
-      set_categories(response.data);
+      const response = await axiosInstance.get('/api/craftexcategories-all');
+      set_categories(response.data.categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
       dispatch(add_notification({
@@ -80,9 +87,10 @@ const UV_Shop: React.FC = () => {
   };
 
   const fetch_products = async () => {
+   
     set_is_loading(true);
     try {
-      const response = await axios.get('http://localhost:1337/api/products', {
+      const response = await axiosInstance.get('/api/products-all-shop', {
         params: {
           ...filters,
           sort: sort_option,
@@ -91,7 +99,10 @@ const UV_Shop: React.FC = () => {
           search: search_query,
         },
       });
+      
+      setProducts2(response.data.products);
       set_products(response.data.products);
+      console.log('fetching products',response.data,"product2",products);
       set_total_pages(Math.ceil(response.data.total_count / 20));
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -124,7 +135,9 @@ const UV_Shop: React.FC = () => {
   );
 
   const handle_filter_change = (key: string, value: any) => {
+    
     const new_filters = { ...filters, [key]: value };
+    
     set_filters(new_filters);
     set_current_page(1);
     update_url(new_filters, sort_option, 1, search_query);
@@ -161,8 +174,10 @@ const UV_Shop: React.FC = () => {
   };
 
   const filtered_products = useMemo(() => {
+    console.log(products,"this is filter product")
     return products.filter((product) => {
-      if (filters.category_uid && product.category_uid !== filters.category_uid) return false;
+      console.log(filters,"this is filter product")
+      if (filters.category_uid && product?.craftexCategory?._id !== filters.category_uid) return false;
       if (filters.price_min && product.price < filters.price_min) return false;
       if (filters.price_max && product.price > filters.price_max) return false;
       if (filters.rating && product.rating < filters.rating) return false;
@@ -191,7 +206,8 @@ const UV_Shop: React.FC = () => {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-8">
+          <div style={{backgroundColor: '#cbced1'}}>
+          <div className="container mx-auto px-4 py-8 " style={{paddingTop: '8rem'}}>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-purple-900">Shop Designs</h1>
@@ -221,21 +237,21 @@ const UV_Shop: React.FC = () => {
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">Category</label>
                   <Select
-                    value={filters.category_uid || ''}
-                    onValueChange={(value) => handle_filter_change('category_uid', value || null)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All Categories</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.uid} value={category.uid}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+  value={filters.category_uid || 'all'} // Use 'all' as the default value
+  onValueChange={(value) => handle_filter_change('category_uid', value === 'all' ? null : value)}
+>
+  <SelectTrigger className="w-full">
+    <SelectValue placeholder="All Categories" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">All Categories</SelectItem> {/* Use 'all' instead of an empty string */}
+    {categories.map((category) => (
+      <SelectItem key={category._id} value={category._id}>
+        {category.name}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
                 </div>
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">Price Range</label>
@@ -315,9 +331,9 @@ const UV_Shop: React.FC = () => {
             ) : (
               <div className={`${view_mode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}`}>
                 {sorted_products.map((product) => (
-                  <div key={product.uid} className={`bg-white rounded-lg shadow-md overflow-hidden ${view_mode === 'list' ? 'flex' : ''}`}>
+                  <div key={product._id} className={`bg-white rounded-lg shadow-md overflow-hidden ${view_mode === 'list' ? 'flex' : ''}`}>
                     <img
-                      src={product.image_url || `https://picsum.photos/seed/${product.uid}/300/300`}
+                      src={baseUrl + product.imageUrl || `https://picsum.photos/seed/${product._1d}/300/300`}
                       alt={product.name}
                       className={`w-full h-48 object-cover ${view_mode === 'list' ? 'w-1/3' : ''}`}
                     />
@@ -325,10 +341,10 @@ const UV_Shop: React.FC = () => {
                       <h3 className="text-lg font-semibold mb-2 text-purple-900">{product.name}</h3>
                       <p className="text-sm text-gray-600 mb-2">{product.designer_name}</p>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xl font-bold text-purple-900">${product.price.toFixed(2)}</span>
+                        <span className="text-xl font-bold text-purple-900">${product.price?.toFixed(2)}</span>
                         <div className="flex items-center">
                           <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                          <span className="text-sm font-medium text-gray-600">{product.rating.toFixed(1)}</span>
+                          <span className="text-sm font-medium text-gray-600">{product.rating?.toFixed(1)}</span>
                         </div>
                       </div>
                       <div className="flex justify-between mt-4">
@@ -389,7 +405,7 @@ const UV_Shop: React.FC = () => {
             {featured_products.map((product) => (
               <div key={product.uid} className="bg-white rounded-lg shadow-md overflow-hidden">
                 <img
-                  src={product.image_url || `https://picsum.photos/seed/${product.uid}/300/300`}
+                  src={baseUrl + product.imageUrl || `https://picsum.photos/seed/${product.uid}/300/300`}
                   alt={product.name}
                   className="w-full h-48 object-cover"
                 />
@@ -425,7 +441,7 @@ const UV_Shop: React.FC = () => {
             </div>
             <div className="flex flex-col md:flex-row gap-8">
               <img
-                src={quick_view_product.image_url || `https://picsum.photos/seed/${quick_view_product.uid}/400/400`}
+                src={baseUrl + quick_view_product.imageUrl || `https://picsum.photos/seed/${quick_view_product.uid}/400/400`}
                 alt={quick_view_product.name}
                 className="w-full md:w-1/2 h-64 object-cover rounded-lg"
               />
@@ -463,6 +479,7 @@ const UV_Shop: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </>
   );
 };
