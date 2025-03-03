@@ -136,6 +136,7 @@ router.get('/api/products-all-shop', async (req, res) => {
       designer,
       country,
       material,
+      search, // Add search query parameter
     } = req.query;
 
     // Build the query object
@@ -143,7 +144,6 @@ router.get('/api/products-all-shop', async (req, res) => {
 
     // Filter by category_uid (category name)
     if (category_uid) {
-    
       query.craftexCategory = category_uid; // Use the ObjectId of the category
     }
 
@@ -167,6 +167,15 @@ router.get('/api/products-all-shop', async (req, res) => {
     // Filter by material
     if (material) {
       query.material = material;
+    }
+
+    // Handle search query
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } }, // Case-insensitive search in name
+        { description: { $regex: search, $options: 'i' } }, // Case-insensitive search in description
+        // Add other fields you want to search in
+      ];
     }
 
     // Build the sort object
