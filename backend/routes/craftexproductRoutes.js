@@ -123,6 +123,92 @@ router.get('/api/products-all', async (req, res) => {
   }
 });
 
+router.get('/api/products-all-shop', async (req, res) => {
+  try {
+    // Extract query parameters
+    const {
+      category_uid,
+      page = 1,
+      limit = 20,
+      sort = 'popularity',
+      price_min,
+      price_max,
+      designer,
+      country,
+      material,
+    } = req.query;
+
+    // Build the query object
+    const query = {};
+
+    // Filter by category_uid (category name)
+    if (category_uid) {
+    
+      query.craftexCategory = category_uid; // Use the ObjectId of the category
+    }
+
+    // Filter by price range
+    if (price_min || price_max) {
+      query.price = {};
+      if (price_min) query.price.$gte = parseFloat(price_min);
+      if (price_max) query.price.$lte = parseFloat(price_max);
+    }
+
+    // Filter by designer
+    if (designer) {
+      query.designer = designer;
+    }
+
+    // Filter by country
+    if (country) {
+      query.country = country;
+    }
+
+    // Filter by material
+    if (material) {
+      query.material = material;
+    }
+
+    // Build the sort object
+    const sortOptions = {};
+    if (sort === 'popularity') {
+      sortOptions.popularity = -1; // Sort by popularity in descending order
+    } else if (sort === 'price_asc') {
+      sortOptions.price = 1; // Sort by price in ascending order
+    } else if (sort === 'price_desc') {
+      sortOptions.price = -1; // Sort by price in descending order
+    }
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Fetch products with filtering, sorting, and pagination
+    const products = await craftexProduct
+      .find(query)
+      .populate('craftexCategory') // Populate the category details
+      .populate('designer')
+      .populate('ratings')
+      .populate('sustainability_metrics')
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count of products (for pagination metadata)
+    const totalProducts = await craftexProduct.countDocuments(query);
+
+    // Send response with products and pagination metadata
+    res.json({
+      success: true,
+      totalProducts,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      products,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // 1. Featured Products
 router.get('/api/featured-products', async (req, res) => {
   try {
