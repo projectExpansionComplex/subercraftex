@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui';
+import { relative } from 'path';
 
 const GV_TopNavigation: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -58,53 +59,118 @@ const GV_TopNavigation: React.FC = () => {
     window.location.reload();
   };
 
+  const [isExploreOpen, setIsExploreOpen] = React.useState(false);
+
+
   return (
     <nav className=" bg-white shadow-md fixed top-0 left-0 right-0 z-50">
-      <div className="navbersubContainer navbar max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="navbersubContainer navbar max-w-7xl mx-auto px-4 sm:px-6 ">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center" style={{justifyContent: "center"}}>
             <Link to="/" className="flex-shrink-0">
               <img className="h-10 w-auto logoMain" src={logo} alt="SUBER-Craftex" />
             </Link>
-            <div className="hidden md:block ml-10" style={{color: "black"}}>
-              <NavigationMenu>
-                <NavigationMenuList className='parentNavLink'>
-                  <NavigationMenuItem className='navbarLinks'>
-                    <NavigationMenuTrigger>Explore Designs</NavigationMenuTrigger>
-                    <NavigationMenuContent style={{top:0}}>
-                      <NavigationMenuLink href="/explore">All Designs</NavigationMenuLink>
-                      <NavigationMenuLink href="/explore/featured">Featured</NavigationMenuLink>
-                      <NavigationMenuLink href="/explore/trending">Trending</NavigationMenuLink>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem className='navbarLinks'>
-                    <NavigationMenuLink href="/designers">Designers</NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem className='navbarLinks'>
-                    <NavigationMenuLink href="/projects">Projects</NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem className='navbarLinks'>
-                    <NavigationMenuLink href="/shop">Shop</NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem className='navbarLinks'>
-                    <NavigationMenuLink href="/learn">Learn</NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem className='navbarLinks'>
-                    <NavigationMenuLink href="/forums">Community</NavigationMenuLink>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
-            </div>
+            <div className="hidden md:block ml-10" style={{ color: "black" }}>
+      <nav className="relative z-10 flex max-w-max flex-1 items-center justify-center">
+        <ul className="group flex flex-1 list-none items-center justify-center space-x-1 parentNavLink">
+          {/* Explore Designs Dropdown */}
+          <li className="navbarLinks relative">
+            <button
+              onClick={() => setIsExploreOpen(!isExploreOpen)}
+              className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-neutral-100/50 data-[state=open]:bg-neutral-100/50 dark:bg-neutral-950 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 dark:focus:bg-neutral-800 dark:focus:text-neutral-50 dark:data-[active]:bg-neutral-800/50 dark:data-[state=open]:bg-neutral-800/50"
+            >
+              Explore Designs
+              <ChevronDown
+                className={`relative top-[1px] ml-1 h-3 w-3 transition duration-200 ${
+                  isExploreOpen ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+            {isExploreOpen && (
+              <div
+                className="absolute left-0 top-full mt-1.5 w-full origin-top-center rounded-md border border-neutral-200 bg-white text-neutral-950 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50 md:w-auto"
+                style={{  position: "absolute" }}
+              >
+                <div className="p-2">
+                  <a
+                    href="/explore"
+                    className="block px-4 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    style={{ top: 0, position: "relative" }}
+                  >
+                    All Designs
+                  </a>
+                  <a
+                    href="/explore/featured"
+                    className="block px-4 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    Featured
+                  </a>
+                  <a
+                    href="/explore/trending"
+                    className="block px-4 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    Trending
+                  </a>
+                </div>
+              </div>
+            )}
+          </li>
+
+          {/* Other Navigation Links */}
+          <li className="navbarLinks">
+            <a
+              href="/designers"
+              className="inline-flex h-10 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-neutral-100/50 data-[state=open]:bg-neutral-100/50 dark:bg-neutral-950 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 dark:focus:bg-neutral-800 dark:focus:text-neutral-50 dark:data-[active]:bg-neutral-800/50 dark:data-[state=open]:bg-neutral-800/50"
+            >
+              Designers
+            </a>
+          </li>
+          <li className="navbarLinks">
+            <a
+              href="/projects"
+              className="inline-flex h-10 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-neutral-100/50 data-[state=open]:bg-neutral-100/50 dark:bg-neutral-950 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 dark:focus:bg-neutral-800 dark:focus:text-neutral-50 dark:data-[active]:bg-neutral-800/50 dark:data-[state=open]:bg-neutral-800/50"
+            >
+              Projects
+            </a>
+          </li>
+          <li className="navbarLinks">
+            <a
+              href="/shop"
+              className="inline-flex h-10 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-neutral-100/50 data-[state=open]:bg-neutral-100/50 dark:bg-neutral-950 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 dark:focus:bg-neutral-800 dark:focus:text-neutral-50 dark:data-[active]:bg-neutral-800/50 dark:data-[state=open]:bg-neutral-800/50"
+            >
+              Shop
+            </a>
+          </li>
+          <li className="navbarLinks">
+            <a
+              href="/learn"
+              className="inline-flex h-10 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-neutral-100/50 data-[state=open]:bg-neutral-100/50 dark:bg-neutral-950 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 dark:focus:bg-neutral-800 dark:focus:text-neutral-50 dark:data-[active]:bg-neutral-800/50 dark:data-[state=open]:bg-neutral-800/50"
+            >
+              Learn
+            </a>
+          </li>
+          <li className="navbarLinks">
+            <a
+              href="/forums"
+              className="inline-flex h-10 w-max items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-neutral-100/50 data-[state=open]:bg-neutral-100/50 dark:bg-neutral-950 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 dark:focus:bg-neutral-800 dark:focus:text-neutral-50 dark:data-[active]:bg-neutral-800/50 dark:data-[state=open]:bg-neutral-800/50"
+            >
+              Community
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
           </div>
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
+          <div className="hidden md:flex items-center space-x-2">
+          <div className="relative">
               <Input
                 type="text"
                 placeholder="Search"
-                className="pl-10 pr-4 py-2 rounded-full border border-gray-300 bg-gray-100 dark:bg-gray-800 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
+                className="pl-10 pr-4 py-2 rounded-full border border-gray-300 bg-gray-100 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500"
               />
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-300 h-5 w-5 cursor-pointer"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 cursor-pointer"
                 onClick={handleSearchClick}
               />
             </div>
@@ -189,7 +255,7 @@ const GV_TopNavigation: React.FC = () => {
             <Link to="/cart" className="relative">
               <ShoppingCart className="h-6 w-6 text-gray-600" />
               {cartItemCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1">
+                <Badge variant="destructive" className="absolute -top-4 -right-1">
                   {cartItemCount}
                 </Badge>
               )}

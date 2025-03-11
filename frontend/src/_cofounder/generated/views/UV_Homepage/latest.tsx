@@ -120,6 +120,7 @@ const UV_Homepage: React.FC = () => {
 
   return (
     <>
+    <div style={{backgroundColor: '#cbced1'}}>
       <div className={`homepage ${theme} ${language}`}>
         {/* Hero Carousel */}
         <section className="hero-carousel mb-12">
@@ -162,6 +163,7 @@ const UV_Homepage: React.FC = () => {
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {Object.entries(categoryProducts).map(([category, products]) => (
       <Link key={category} to={`/category/${category}`} className="category-tile">
+        {console.log(categoryProducts,"this is cat")}
         <div className="relative h-48 rounded overflow-hidden">
           <img src={baseUrl + products[0]?.thumbnail} alt={category} className="w-full h-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
@@ -284,6 +286,7 @@ const UV_Homepage: React.FC = () => {
     </div>
   </section>
 )}
+      </div>
       </div>
     </>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+
 import { debounce } from 'lodash';
 import { RootState, AppDispatch, add_notification } from '@/store/main';
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Star, Search, PlusCircle } from 'lucide-react';
+import baseUrl from '../../../../utils/baseURL.js'
+import axiosInstance from '@/utils/axiosInstance';
+
+
 
 const UV_LearningCenter: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -30,7 +34,7 @@ const UV_LearningCenter: React.FC = () => {
   const fetchTutorials = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get('http://localhost:1337/api/educational-resources', {
+      const response = await axiosInstance.get('/api/educational-resources', {
         params: {
           category: selectedCategory !== 'all' ? selectedCategory : undefined,
           skill_level: selectedSkillLevel !== 'all' ? selectedSkillLevel : undefined,
@@ -53,27 +57,31 @@ const UV_LearningCenter: React.FC = () => {
     }
   }, [selectedCategory, selectedSkillLevel, currentPage, searchQuery, dispatch]);
 
-  const debouncedFetchTutorials = debounce(fetchTutorials, 300);
+  // Debounce the fetchTutorials function
+const debouncedFetchTutorials = useCallback(debounce(fetchTutorials, 300), [fetchTutorials]);
 
-  useEffect(() => {
-    debouncedFetchTutorials();
-  }, [debouncedFetchTutorials]);
+ // Fetch tutorials when filters or pagination change
+useEffect(() => {
+  debouncedFetchTutorials();
+  return () => debouncedFetchTutorials.cancel(); // Cancel debounce on unmount
+}, [debouncedFetchTutorials]);
 
-  useEffect(() => {
-    const fetchCategoriesAndSkillLevels = async () => {
-      try {
-        const [categoriesResponse, skillLevelsResponse] = await Promise.all([
-          axios.get('http://localhost:1337/api/tutorial-categories'),
-          axios.get('http://localhost:1337/api/skill-levels'),
-        ]);
-        setCategories(categoriesResponse.data);
-        setSkillLevels(skillLevelsResponse.data);
-      } catch (error) {
-        console.error('Error fetching categories and skill levels:', error);
-      }
-    };
-    fetchCategoriesAndSkillLevels();
-  }, []);
+ // Fetch categories and skill levels on mount
+useEffect(() => {
+  const fetchCategoriesAndSkillLevels = async () => {
+    try {
+      const [categoriesResponse, skillLevelsResponse] = await Promise.all([
+        axiosInstance.get('/api/tutorial-categories'),
+        axiosInstance.get('/api/skill-levels'),
+      ]);
+      setCategories(categoriesResponse.data);
+      setSkillLevels(skillLevelsResponse.data);
+    } catch (error) {
+      console.error('Error fetching categories and skill levels:', error);
+    }
+  };
+  fetchCategoriesAndSkillLevels();
+}, []);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -96,7 +104,7 @@ const UV_LearningCenter: React.FC = () => {
 
   const handleTutorialSelect = async (tutorialId: string) => {
     try {
-      const response = await axios.get(`http://localhost:1337/api/educational-resources/${tutorialId}`);
+      const response = await axiosInstance.get(`/api/educational-resources/${tutorialId}`);
       setSelectedTutorial(response.data);
     } catch (error) {
       console.error('Error fetching tutorial details:', error);
@@ -118,7 +126,7 @@ const UV_LearningCenter: React.FC = () => {
       return;
     }
     try {
-      await axios.post(`http://localhost:1337/api/educational-resources/${tutorialId}/rate`, { rating });
+      await axiosInstance.post(`/api/educational-resources/${tutorialId}/rate`, { rating });
       dispatch(add_notification({
         id: Date.now().toString(),
         type: 'success',
@@ -138,7 +146,7 @@ const UV_LearningCenter: React.FC = () => {
   const handleUpdateProgress = async (tutorialId: string, progress: number) => {
     if (!current_user) return;
     try {
-      await axios.put(`http://localhost:1337/api/educational-resources/${tutorialId}/progress`, { progress });
+      await axiosInstance.put(`/api/educational-resources/${tutorialId}/progress`, { progress });
       fetchTutorials();
     } catch (error) {
       console.error('Error updating progress:', error);
@@ -183,7 +191,7 @@ const UV_LearningCenter: React.FC = () => {
                     <SelectContent>
                       <SelectItem value="all">All Categories</SelectItem>
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                        <SelectItem key={category._id} value={category._id}>{category.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -222,7 +230,7 @@ const UV_LearningCenter: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {tutorials.map((tutorial) => (
                     <div key={tutorial.uid} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                      <img src={tutorial.thumbnail || `https://picsum.photos/seed/${tutorial.uid}/400/225`} alt={tutorial.title} className="w-full h-48 object-cover" />
+                      <img src={baseUrl + tutorial.thumbnail || `https://picsum.photos/seed/${tutorial._id}/400/225`} alt={tutorial.title} className="w-full h-48 object-cover" />
                       <div className="p-6">
                         <h2 className="text-xl font-semibold mb-2 dark:text-white">{tutorial.title}</h2>
                         <p className="text-gray-600 dark:text-gray-300 mb-4">{tutorial.description}</p>
@@ -300,7 +308,7 @@ const UV_LearningCenter: React.FC = () => {
                 {selectedTutorial.content_type === 'video' ? (
                   <div className="aspect-w-16 aspect-h-9 mb-4">
                     <iframe
-                      src={selectedTutorial.content_url}
+                      src={baseUrl + selectedTutorial.content_url}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       className="w-full h-full"

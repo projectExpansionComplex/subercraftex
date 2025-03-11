@@ -8,11 +8,11 @@ const craftexCustomRequest = require('../models/craftexCustomRequest')
 const path = require('path')
 const sharp = require('sharp');
 
-// Multer configuration for file uploads
+// Multer configuration for avatar uploads
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, '..', 'uploads', 'designer-avatar')); 
+      cb(null, path.join(__dirname, '..', 'uploads', 'designer-avatar')); // Save files in 'uploads/designer-avatar'
     },
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -33,11 +33,11 @@ const upload = multer({
 // POST route to create a new designer profile
 router.post(
   '/api/craftexdesigners',
+  upload.single('avatar'), // Handle single file upload for the 'avatar' field
   [
     // Validation middleware using express-validator
     body('user').notEmpty().withMessage('User ID is required'),
-    body('name').notEmpty().withMessage('Name is required'), // Validate name
-    body('avatar').optional().isString().withMessage('Avatar must be a URL'), // Validate avatar
+    body('name').notEmpty().withMessage('Name is required'),
     body('specialty').notEmpty().withMessage('Specialty is required'),
     body('bio').optional().isString().withMessage('Bio must be a string'),
     body('portfolio').optional().isArray().withMessage('Portfolio must be an array of URLs'),
@@ -50,7 +50,7 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { user, name, avatar, specialty, bio, portfolio } = req.body;
+      const { user, name, specialty, bio, portfolio } = req.body;
 
       // Validate user
       const existingUser = await craftexUser.findById(user);
@@ -64,14 +64,31 @@ router.post(
         return res.status(400).json({ message: 'Designer profile already exists for this user' });
       }
 
+      // Process avatar upload
+      let avatarUrl = '/uploads/designer-avatar/default-avatar.jpg'; // Default avatar
+      if (req.file) {
+        const avatarPath = path.join(__dirname, '..', 'uploads', 'designer-avatar', req.file.filename);
+        const resizedAvatarPath = avatarPath.replace('.jpg', '-resized.jpg');
+
+        // Resize avatar using sharp
+        await sharp(req.file.path)
+          .resize(150, 150, {
+            fit: 'inside', // Preserve aspect ratio, fit within 150x150
+            withoutEnlargement: true, // Do not enlarge the image if it's smaller than 150x150
+          })
+          .toFile(resizedAvatarPath); // Save resized image to a new path
+
+        avatarUrl = `/uploads/designer-avatar/${req.file.filename.replace('.jpg', '-resized.jpg')}`;
+      }
+
       // Create new designer profile
       const designer = new craftexDesigner({
         user,
-        name, // Add name
-        avatar: avatar || "https://via.placeholder.com/150", // Add avatar with a default value
+        name,
+        avatar: avatarUrl, // Save the avatar file path
         specialty,
         bio,
-        portfolio: portfolio || [], // Initialize portfolio as an empty array if not provided
+        portfolio: portfolio || [],
       });
 
       // Save designer profile to the database
@@ -148,7 +165,18 @@ router.put(
 
       // Handle avatar upload
       if (req.file) {
-        designer.avatar = `/uploads/designer-avatar/${req.file.filename}`; // Save the file path to the avatar field
+        const avatarPath = path.join(__dirname, '..', 'uploads', 'designer-avatar', req.file.filename);
+        const resizedAvatarPath = avatarPath.replace('.jpg', '-resized.jpg');
+
+        // Resize avatar using sharp
+        await sharp(req.file.path)
+          .resize(150, 150, {
+            fit: 'inside', // Preserve aspect ratio, fit within 150x150
+            withoutEnlargement: true, // Do not enlarge the image if it's smaller than 150x150
+          })
+          .toFile(resizedAvatarPath); // Save resized image to a new path
+
+        designer.avatar = `/uploads/designer-avatar/${req.file.filename.replace('.jpg', '-resized.jpg')}`;
       }
 
       // Save updated designer profile

@@ -212,7 +212,7 @@ const UV_ProductDetail: React.FC = () => {
 
   return (
     <>
-   
+     <div style={{backgroundColor: 'rgb(49 54 59)'}}>
       <div className="container mx-auto px-4 py-8" style={{paddingTop:'7rem'}}>
      
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -247,7 +247,7 @@ const UV_ProductDetail: React.FC = () => {
           {/* Product Info */}
           <div>
             <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-            {console.log("variant for price",selectedVariant )}
+            
             <p className="text-2xl font-semibold mb-4">${selectedVariant?.price.toFixed(2)}</p>
             
 
@@ -298,7 +298,7 @@ const UV_ProductDetail: React.FC = () => {
               <label htmlFor="quantity" className="mr-2">Quantity:</label>
               <button
                 onClick={subtractQuantity}
-                className="px-2 py-1 bg-gray-200 rounded-l"
+                className="px-2 py-1 bg-gray-200 rounded-l" style={{backgroundColor:"rgb(146 158 181)"}}
               >
                 -
               </button>
@@ -318,7 +318,7 @@ const UV_ProductDetail: React.FC = () => {
                
               <button
                 onClick={addQuantity}
-                className="px-2 py-1 bg-gray-200 rounded-r"
+                className="px-2 py-1 bg-gray-200 rounded-r "style={{backgroundColor:"rgb(146 158 181)"}}
               >
                 +
               </button>
@@ -387,24 +387,24 @@ const UV_ProductDetail: React.FC = () => {
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-4">Sustainability Information</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-green-100 p-4 rounded">
+            <div className="bg-green-100 p-4 rounded" style={{backgroundColor:"rgb(70 180 108)"}}>
               <h3 className="font-semibold mb-2">Eco-Friendly Materials:</h3>
-              {console.log(product?.sustainability_metrics?.sustainability_metrics,"checking sus")}
+              
               <p>{product?.sustainability_metrics?.sustainability_metrics?.eco_friendly_materials ? 'Yes' : 'No'}</p>
             </div>
-            <div className="bg-blue-100 p-4 rounded">
+            <div className="bg-blue-100 p-4 rounded " style={{backgroundColor:"rgb(167 179 195)"}}>
               <h3 className="font-semibold mb-2">Carbon Footprint:</h3>
               <p>{product?.sustainability_metrics?.sustainability_metrics?.carbon_footprint} kg CO2e</p>
             </div>
-            <div className="bg-yellow-100 p-4 rounded">
+            <div className="bg-yellow-100 p-4 rounded" style={{backgroundColor:"rgb(186 181 129)"}}>
               <h3 className="font-semibold mb-2">Water Usage:</h3>
               <p>{product?.sustainability_metrics?.sustainability_metrics?.water_usage} liters</p>
             </div>
-            <div className="bg-purple-100 p-4 rounded">
+            <div className="bg-purple-100 p-4 rounded" style={{backgroundColor:"rgb(184 170 199)"}}>
               <h3 className="font-semibold mb-2">Renewable Energy Used:</h3>
               <p>{product?.sustainability_metrics?.sustainability_metrics?.renewable_energy_used ? 'Yes' : 'No'}</p>
             </div>
-            <div className="bg-red-100 p-4 rounded">
+            <div className="bg-red-100 p-4 rounded" style={{backgroundColor:"rgb(219 177 177)"}}>
               <h3 className="font-semibold mb-2">Recyclable Packaging:</h3>
               <p>{product?.sustainability_metrics?.sustainability_metrics?.recyclable_packaging ? 'Yes' : 'No'}</p>
             </div>
@@ -485,6 +485,7 @@ const UV_ProductDetail: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
       </div>
     </>
   );

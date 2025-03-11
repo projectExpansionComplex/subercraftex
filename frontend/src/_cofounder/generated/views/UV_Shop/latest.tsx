@@ -102,7 +102,6 @@ useEffect(()=>{
       
       setProducts2(response.data.products);
       set_products(response.data.products);
-      console.log('fetching products',response.data,"product2",products);
       set_total_pages(Math.ceil(response.data.total_count / 20));
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -174,9 +173,9 @@ useEffect(()=>{
   };
 
   const filtered_products = useMemo(() => {
-    console.log(products,"this is filter product")
+   
     return products.filter((product) => {
-      console.log(filters,"this is filter product")
+  
       if (filters.category_uid && product?.craftexCategory?._id !== filters.category_uid) return false;
       if (filters.price_min && product.price < filters.price_min) return false;
       if (filters.price_max && product.price > filters.price_max) return false;
@@ -218,12 +217,12 @@ useEffect(()=>{
                 placeholder="Search designs..."
                 value={search_query}
                 onChange={(e) => handle_search(e.target.value)}
-                className="pl-10 pr-4 py-2 w-64"
+                className="pl-10 pr-4 py-2 w-64 text-black"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             </div>
             <Button variant="outline" size="icon">
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-5 w-5 " style={{color:"rgb(0 0 0 / 39%)"}}/>
             </Button>
           </div>
         </div>
@@ -272,10 +271,11 @@ useEffect(()=>{
                     />
                   </div>
                 </div>
-                <div>
+                <div >
                   <label className="block mb-2 text-sm font-medium text-gray-700">Minimum Rating</label>
                   <Input
                     type="number"
+                     className="text-black"
                     min="0"
                     max="5"
                     step="0.5"
@@ -332,8 +332,9 @@ useEffect(()=>{
               <div className={`${view_mode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}`}>
                 {sorted_products.map((product) => (
                   <div key={product._id} className={`bg-white rounded-lg shadow-md overflow-hidden ${view_mode === 'list' ? 'flex' : ''}`}>
+                    {console.log(product,"thi sis product")}
                     <img
-                      src={baseUrl + product.imageUrl || `https://picsum.photos/seed/${product._1d}/300/300`}
+                      src={baseUrl + product.images[0] || `https://picsum.photos/seed/${product._1d}/300/300`}
                       alt={product.name}
                       className={`w-full h-48 object-cover ${view_mode === 'list' ? 'w-1/3' : ''}`}
                     />
@@ -347,7 +348,7 @@ useEffect(()=>{
                           <span className="text-sm font-medium text-gray-600">{product.rating?.toFixed(1)}</span>
                         </div>
                       </div>
-                      <div className="flex justify-between mt-4">
+                      <div className="flex justify-between mt-4 text-gray-600">
                         <Button
                           variant="outline"
                           size="sm"
@@ -432,16 +433,17 @@ useEffect(()=>{
       {/* Quick View Modal */}
       {quick_view_product && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+
           <div className="bg-white rounded-lg p-8 max-w-2xl w-full">
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-2xl font-bold text-purple-900">{quick_view_product.name}</h2>
               <Button variant="ghost" size="icon" onClick={() => set_quick_view_product(null)}>
-                <X className="h-6 w-6" />
+                <X className="h-6 w-6 text-gray-600" />
               </Button>
             </div>
             <div className="flex flex-col md:flex-row gap-8">
               <img
-                src={baseUrl + quick_view_product.imageUrl || `https://picsum.photos/seed/${quick_view_product.uid}/400/400`}
+                src={baseUrl + quick_view_product.imageUrl || `https://picsum.photos/seed/${quick_view_product._id}/400/400`}
                 alt={quick_view_product.name}
                 className="w-full md:w-1/2 h-64 object-cover rounded-lg"
               />
@@ -449,7 +451,7 @@ useEffect(()=>{
                 <div>
                   <p className="text-gray-600 mb-2">{quick_view_product.designer_name}</p>
                   <p className="mb-4">{quick_view_product.description}</p>
-                  <p className="text-2xl font-bold mb-4 text-purple-900">${quick_view_product.price.toFixed(2)}</p>
+                  <p className="text-2xl font-bold mb-4 text-purple-900">${quick_view_product.price?.toFixed(2)}</p>
                   <div className="flex items-center mb-4">
                     {Array.from({ length: 5 }).map((_, index) => (
                       <Star
@@ -462,7 +464,7 @@ useEffect(()=>{
                         fill="currentColor"
                       />
                     ))}
-                    <span className="ml-2 text-sm text-gray-600">({quick_view_product.rating.toFixed(1)})</span>
+                    <span className="ml-2 text-sm text-gray-600">({quick_view_product.rating?.toFixed(1)})</span>
                   </div>
                 </div>
                 <Button
