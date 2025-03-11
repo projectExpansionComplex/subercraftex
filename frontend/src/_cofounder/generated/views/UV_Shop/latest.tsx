@@ -332,8 +332,9 @@ useEffect(()=>{
               <div className={`${view_mode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}`}>
                 {sorted_products.map((product) => (
                   <div key={product._id} className={`bg-white rounded-lg shadow-md overflow-hidden ${view_mode === 'list' ? 'flex' : ''}`}>
+                    {console.log(product,"thi sis product")}
                     <img
-                      src={baseUrl + product.imageUrl || `https://picsum.photos/seed/${product._1d}/300/300`}
+                      src={baseUrl + product.images[0] || `https://picsum.photos/seed/${product._1d}/300/300`}
                       alt={product.name}
                       className={`w-full h-48 object-cover ${view_mode === 'list' ? 'w-1/3' : ''}`}
                     />

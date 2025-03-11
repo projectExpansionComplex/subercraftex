@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+
 import { format } from 'date-fns';
 import { RootState } from '@/store/main';
 import { add_notification } from '@/store/main';
@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { MessageSquare, Eye, ThumbsUp, Users, Hash } from 'lucide-react';
+import baseUrl from '../../../../utils/baseURL.js'
+import axiosInstance from '@/utils/axiosInstance';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const UV_CommunityForums: React.FC = () => {
   const dispatch = useDispatch();
@@ -46,7 +49,7 @@ const UV_CommunityForums: React.FC = () => {
 
   const fetchForumCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:1337/api/forum-categories');
+      const response = await axiosInstance.get('/api/forum-categories');
       setForumCategories(response.data);
     } catch (err) {
       console.error('Error fetching forum categories:', err);
@@ -57,7 +60,7 @@ const UV_CommunityForums: React.FC = () => {
   const fetchTopics = async (page = 1, category = '') => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:1337/api/forum-topics`, {
+      const response = await axiosInstance.get(`/api/forum-topics`, {
         params: { page, category, search: searchQuery }
       });
       setTopicList(response.data.data);
@@ -77,7 +80,7 @@ const UV_CommunityForums: React.FC = () => {
   const selectTopic = async (topicUid: string) => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:1337/api/forum-topics/${topicUid}`);
+      const response = await axiosInstance.get(`/api/forum-topics/${topicUid}`);
       setSelectedTopic(response.data);
     } catch (err) {
       console.error('Error fetching topic details:', err);
@@ -98,13 +101,14 @@ const UV_CommunityForums: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:1337/api/forum-topics', {
+      const response = await axiosInstance.post('/api/forum-topics', {
         title: 'New Topic',
         content: editorContent,
         category_uid: categoryUid
       }, {
         headers: { Authorization: `Bearer ${auth_token}` }
       });
+      console.log('Topic created:', response.data);
       setTopicList([response.data, ...topicList]);
       setEditorContent('');
       dispatch(add_notification({
@@ -126,7 +130,7 @@ const UV_CommunityForums: React.FC = () => {
     if (!auth_token || !selectedTopic) return;
 
     try {
-      const response = await axios.post(`http://localhost:1337/api/forum-replies`, {
+      const response = await axiosInstance.post(`/api/forum-replies`, {
         topic_uid: selectedTopic.uid,
         content: editorContent
       }, {
@@ -156,7 +160,7 @@ const UV_CommunityForums: React.FC = () => {
     if (!auth_token) return;
 
     try {
-      await axios.post(`http://localhost:1337/api/forum-${isReply ? 'replies' : 'topics'}/${postUid}/upvote`, {}, {
+      await axiosInstance.post(`/api/forum-${isReply ? 'replies' : 'topics'}/${postUid}/upvote`, {}, {
         headers: { Authorization: `Bearer ${auth_token}` }
       });
       if (isReply) {
@@ -188,7 +192,110 @@ const UV_CommunityForums: React.FC = () => {
     return format(new Date(date), 'PPP', { locale: language });
   };
 
+
+
+
+    const [isNewTopicModalOpen, setIsNewTopicModalOpen] = useState(false);
+    
+
+    // Handle new topic creation
+  const handleCreateTopic = async ({ title, content, category }) => {
+    try {
+      const response = await axiosInstance.post('/api/forum-topics', {
+        title,
+        content,
+        category,
+      }, {
+        headers: { Authorization: `Bearer ${auth_token}` },
+      });
+      setTopicList([response.data, ...topicList]);
+      setIsNewTopicModalOpen(false);
+      dispatch(add_notification({
+        id: Date.now().toString(),
+        type: 'success',
+        message: 'Topic created successfully!',
+      }));
+    } catch (err) {
+      console.error('Error creating topic:', err);
+      dispatch(add_notification({
+        id: Date.now().toString(),
+        type: 'error',
+        message: 'Failed to create topic. Please try again.',
+      }));
+    }
+  };
+  const NewTopicForm = ({ categories, onSubmit, onClose }) => {
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
+  
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (!title.trim() || !content.trim() || !selectedCategory) {
+        alert('Please fill out all fields.');
+        return;
+      }
+      onSubmit({ title, content, category: selectedCategory });
+    };
+  
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+          <h2 className="text-2xl font-bold mb-4">Create New Topic</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Category</label>
+              <Select
+                value={selectedCategory}
+                onValueChange={(value) => setSelectedCategory(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent className="z-50">
+                  {categories.map((category) => (
+                    <SelectItem key={category._id} value={category._id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Title</label>
+              <Input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter topic title"
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Content</label>
+              <ReactQuill
+                value={content}
+                onChange={setContent}
+                className="bg-white"
+                placeholder="Write your topic content here..."
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
+                Create Topic
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   return (
+    <div className=" min-h-screen" style={{backgroundColor: '#cbced1', paddingTop: '7rem', color: '#000000', fontFamily: 'Arial, sans-serif'}}>
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
         <div className="md:w-3/4">
@@ -208,17 +315,24 @@ const UV_CommunityForums: React.FC = () => {
               <Button type="submit" className="rounded-l-none">Search</Button>
             </form>
             {auth_token && (
-              <Button onClick={() => createTopic(forumCategories[0]?.uid)} className="bg-green-500 hover:bg-green-600">
+              <Button onClick={() => setIsNewTopicModalOpen(true)} className="bg-green-500 hover:bg-green-600">
                 New Topic
               </Button>
             )}
           </div>
+          {isNewTopicModalOpen && (
+        <NewTopicForm
+          categories={forumCategories}
+          onSubmit={handleCreateTopic}
+          onClose={() => setIsNewTopicModalOpen(false)}
+        />
+      )}
 
           {!selectedTopic && (
             <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {forumCategories.map((category) => (
-                  <div key={category.uid} className="bg-white shadow rounded-lg p-6">
+                  <div key={category._id} className="bg-white shadow rounded-lg p-6">
                     <h2 className="text-xl font-semibold mb-4">{category.name}</h2>
                     <p className="text-gray-600 mb-4">{category.description}</p>
                     <div className="flex justify-between items-center">
@@ -227,7 +341,7 @@ const UV_CommunityForums: React.FC = () => {
                         {category.topic_count}
                       </Badge>
                       <Button
-                        onClick={() => createTopic(category.uid)}
+                        onClick={() => createTopic(category._id)}
                         className="bg-blue-500 hover:bg-blue-600"
                         size="sm"
                       >
@@ -293,6 +407,7 @@ const UV_CommunityForums: React.FC = () => {
 
           {selectedTopic && (
             <div className="bg-white shadow rounded-lg p-6">
+              {console.log(selectedTopic, "this is selected topi")}
               <Button onClick={() => navigate('/forum')} variant="ghost" className="mb-4">
                 &larr; Back to Forums
               </Button>
@@ -364,7 +479,7 @@ const UV_CommunityForums: React.FC = () => {
               <div className="flex items-center gap-4 mb-4">
                 <Avatar>
                   <AvatarImage src={current_user.avatar_url} alt={current_user.username} />
-                  <AvatarFallback>{current_user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{current_user.username?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
                   <h3 className="font-semibold">{current_user.username}</h3>
@@ -372,7 +487,7 @@ const UV_CommunityForums: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                {current_user.badges.map((badge: string) => (
+                {current_user.badges?.map((badge: string) => (
                   <Badge key={badge} variant="secondary">{badge}</Badge>
                 ))}
               </div>
@@ -408,6 +523,7 @@ const UV_CommunityForums: React.FC = () => {
           <p>You must be logged in to create topics or post replies. <Link to="/login" className="underline">Log in</Link> or <Link to="/register" className="underline">register</Link> to join the discussion.</p>
         </div>
       )}
+    </div>
     </div>
   );
 };

@@ -165,7 +165,10 @@ const craftexsustainabilityRoutes = require('../routes/craftexsustainabilityRout
 const craftexvirtualshowroomsRoutes = require('../routes/craftexvirtualshowroomsRoutes')
 const craftexwishlistRoutes = require('../routes/craftexwishlistRoutes')
 const craftexuserRoutes = require('../routes/craftexuserRoutes')
-
+const craftextutorialCategoryRoutes = require('../routes/craftextutorialCategoryRoutes');
+const craftexskillLevelRoutes = require('../routes/craftexskillLevelRoutes');
+const craftexforumCategoryRoutes = require('../routes/craftexforumCategoryRoutes');
+const craftexProjectCategoryRoutes = require('../routes/craftexProjectCategoryRoutes');
 
 // -----------------subercraftex routes
 app.use('/', craftexProductRoutes);
@@ -212,6 +215,10 @@ app.use('/', craftexvirtualshowroomsRoutes);
 //--------------------------------------------wishlist------------------------------------
 app.use('/', craftexwishlistRoutes);
 app.use('/', craftexuserRoutes);
+app.use('/', craftextutorialCategoryRoutes);
+app.use('/', craftexskillLevelRoutes);
+app.use('/', craftexforumCategoryRoutes);
+app.use('/', craftexProjectCategoryRoutes);
 
 //auth routes
 app.use('/api', require('../routes/userRouter'))

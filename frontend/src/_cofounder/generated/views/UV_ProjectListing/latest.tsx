@@ -44,6 +44,7 @@ const UV_ProjectListing: React.FC = () => {
         },
         headers: auth_token ? { Authorization: `Bearer ${auth_token}` } : {},
       });
+     
       setProjects(response.data.projects);
       setTotalPages(response.data.total_pages);
     } catch (error) {
@@ -71,8 +72,9 @@ const UV_ProjectListing: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axiosInstance.get('/api/craftexcategories-all');
-        setCategories(response.data.categories);
+        const response = await axiosInstance.get('/api/craftexprojectcategories');
+        
+        setCategories(response.data);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -281,6 +283,7 @@ const UV_ProjectListing: React.FC = () => {
                         onClick={() => handleSaveProject(project._id)}
                         variant="outline"
                         className="w-full mb-2"
+                        style={{color:"#00000073"}}
                       >
                         {savedProjects.includes(project._id) ? (
                           <><BookmarkMinus className="mr-2 h-4 w-4" /> Unsave</>

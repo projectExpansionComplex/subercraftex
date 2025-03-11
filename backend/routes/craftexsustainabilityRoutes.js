@@ -67,20 +67,18 @@ router.post(
       let thumbnailUrl = null;
       if (req.files['thumbnail']) {
         const thumbnailPath = path.join(__dirname, '..', 'uploads', 'sustainability', req.files['thumbnail'][0].filename);
-        const resizedThumbnailPath = thumbnailPath.replace('.jpg', '-resized.jpg');
-
+        const resizedThumbnailPath = thumbnailPath.replace('.jpg', '-resized.jpg'); // Ensure a unique output path
+      
         // Resize thumbnail using sharp
-        await sharp(req.files['thumbnail'][0].path)
+        await sharp(req.files['thumbnail'][0].path) // Use the temporary uploaded file path
           .resize(150, 150, {
             fit: 'inside', // Preserve aspect ratio, fit within 150x150
             withoutEnlargement: true, // Do not enlarge the image if it's smaller than 150x150
           })
           .toFile(resizedThumbnailPath); // Save resized image to a new path
-
-
+      
         thumbnailUrl = `/uploads/sustainability/${req.files['thumbnail'][0].filename.replace('.jpg', '-resized.jpg')}`;
       }
-
       const newSustainability = new craftexSustainability({
         title,
         description,

@@ -32,6 +32,7 @@ const productSchema = new mongoose.Schema({
       sku: String,
     },
   ],
+  sustainability_metrics: { type: mongoose.Schema.Types.ObjectId, ref: 'craftexSustainability' }, // Add this field
   images: [{
     type: String, // URLs of product images
   }],

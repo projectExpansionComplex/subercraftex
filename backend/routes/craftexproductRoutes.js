@@ -5,7 +5,7 @@ const multer = require('multer');
 const { body, validationResult } = require('express-validator');
 const craftexUser = require('../models/userModel')
 const craftexCategory = require('../models/craftexCategory')
-
+const craftexDesigner= require('../models/craftexDesigner')
 const path = require('path')
 const sharp = require('sharp');
 const {auth, authorize} = require('../middleware/authMiddlerware')
@@ -251,6 +251,7 @@ router.post(
     body('dimensions.height').optional().isFloat({ min: 0 }).withMessage('Height must be a non-negative number'),
     body('weight').optional().isFloat({ min: 0 }).withMessage('Weight must be a non-negative number'),
     body('country_of_origin').optional().isString().withMessage('Country of origin must be a string'),
+    body('sustainability_metrics').optional().isObject().withMessage('Sustainability metrics must be an object'),
   ],
   async (req, res) => {
     try {
@@ -272,7 +273,8 @@ router.post(
         materials, 
         dimensions, 
         weight, 
-        country_of_origin 
+        country_of_origin,
+        sustainability_metrics // Add sustainability_metrics
       } = req.body;
 
       // Validate category
@@ -281,9 +283,9 @@ router.post(
         return res.status(400).json({ message: 'Invalid category ID' });
       }
 
-      // Validate user
-      const existingdesigner = await craftexUser.findById(designer);
-      if (!existingdesigner) {
+      // Validate designer
+      const existingDesigner = await craftexDesigner.findById(designer);
+      if (!existingDesigner) {
         return res.status(400).json({ message: 'Invalid designer ID' });
       }
 
@@ -340,6 +342,7 @@ router.post(
         dimensions: dimensions || { length: 0, width: 0, height: 0 }, // Save dimensions if provided
         weight: weight || 0, // Save weight if provided
         country_of_origin: country_of_origin || '', // Save country of origin if provided
+        sustainability_metrics: sustainability_metrics || null, // Save sustainability metrics if provided
       });
 
       // Save product to the database

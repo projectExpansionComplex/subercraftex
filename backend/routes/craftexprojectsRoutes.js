@@ -5,7 +5,8 @@ const router = express.Router();
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
 const craftexUser = require('../models/userModel')
-const craftexCategory = require('../models/craftexCategory')
+const craftexProjectCategory = require('../models/craftexProjectCategory')
+
 const path = require('path')
 const sharp = require('sharp');
 // Multer configuration for file blogpost
@@ -69,7 +70,7 @@ router.post(
       }
 
       // Validate category
-      const existingCategory = await craftexCategory.findById(category_uid);
+      const existingCategory = await craftexProjectCategory.findById(category_uid);
       if (!existingCategory) {
         return res.status(400).json({ message: 'Invalid category ID' });
       }
@@ -202,7 +203,7 @@ router.put(
       if (deadline) project.deadline = deadline;
       if (skills) project.skills = skills;
       if (category_uid) {
-        const existingCategory = await craftexCategory.findById(category_uid);
+        const existingCategory = await craftexProjectCategory.findById(category_uid);
         if (!existingCategory) {
           return res.status(400).json({ message: 'Invalid category ID' });
         }

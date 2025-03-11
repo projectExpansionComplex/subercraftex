@@ -70,7 +70,7 @@ const generateEmailTemplate = (code) => {
       <div>
           <div style="max-width:620px; margin:0 auto; font-family:sans-serif; color:#272727;">
             <h1 style="background:#f6f6f6; padding:10px; text-align:center; color:#272727;">
-            We are delighted to welcome you to our suberDesign shop
+            We are delighted to welcome you to our suberCraftex shop
 
             </h1>
             <p>Please Verify Your Email To Continue Your Verification code is:</p>
@@ -410,12 +410,12 @@ const authCtrl = {
     await user.save();
 
     mailTransport().sendMail({
-      form: "suberDesignVerification@suberDesign.com",
+      form: "suberCraftexVerification@suberCraftex.com",
       to: user.email,
       subject: "Welcome Email",
       html: plainEmailTemplate(
         "Email Verified Successfully",
-        "Thanks for connecting with suberDesign"
+        "Thanks for connecting with suberCraftex"
       ),
     });
 
@@ -715,7 +715,7 @@ const authCtrl = {
       await verificationToken.save();
       //sending mail
       mailTransport().sendMail({
-        form: "suberDesignVerification@suberDesign.com",
+        form: "suberCraftexVerification@suberCraftex.com",
         to: user.email,
         subject: "Verify your email account(new code)",
         html: generateEmailTemplate(OTP),
@@ -769,7 +769,7 @@ const authCtrl = {
       const resetToken = await ResetToken.findOneAndRemove({ owner: user._id });
 
       mailTransport().sendMail({
-        form: "suberDesignSecurity@suberDesign.com",
+        form: "suberCraftexSecurity@suberCraftex.com",
         to: user.email,
         subject: "Password Reset Successfully",
         html: generatePasswordResetTemplateSuccess(
@@ -850,7 +850,7 @@ const authCtrl = {
       });
 
       mailTransport().sendMail({
-        form: "suberDesignSecurity@suberDesign.com",
+        form: "suberCraftexSecurity@suberCraftex.com",
         to: user.email,
         subject: "Password Reset Successfully",
         html: generatePasswordResetTemplateSuccess(
