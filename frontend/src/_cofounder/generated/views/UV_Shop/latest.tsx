@@ -332,7 +332,7 @@ useEffect(()=>{
               <div className={`${view_mode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}`}>
                 {sorted_products.map((product) => (
                   <div key={product._id} className={`bg-white rounded-lg shadow-md overflow-hidden ${view_mode === 'list' ? 'flex' : ''}`}>
-                    {console.log(product,"thi sis product")}
+                    
                     <img
                       src={baseUrl + product.images[0] || `https://picsum.photos/seed/${product._1d}/300/300`}
                       alt={product.name}
@@ -441,9 +441,10 @@ useEffect(()=>{
                 <X className="h-6 w-6 text-gray-600" />
               </Button>
             </div>
-            <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex flex-col md:flex-row gap-8" style={{color:"black"}}>
+              {console.log(quick_view_product, "quit vie")}
               <img
-                src={baseUrl + quick_view_product.imageUrl || `https://picsum.photos/seed/${quick_view_product._id}/400/400`}
+                src={baseUrl + quick_view_product.images[0] || `https://picsum.photos/seed/${quick_view_product._id}/400/400`}
                 alt={quick_view_product.name}
                 className="w-full md:w-1/2 h-64 object-cover rounded-lg"
               />

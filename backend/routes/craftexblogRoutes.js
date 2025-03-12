@@ -1,30 +1,38 @@
 const express = require('express');
 const craftexBlogPost = require( '../models/craftexBlogPost');
+const craftexBlogPostCategory = require( '../models/craftexBlogPostCategory');
 const router = express.Router();
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
 const craftexUser = require('../models/userModel')
 const path = require('path')
 // Multer configuration for file uploads
-// Multer configuration for file blogpost
+
+// Multer configuration for blog post images and videos
 const upload2 = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, '..', 'uploads', 'blog-posts')); // Save files in 'uploads/products'
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, path.join(__dirname, '..', 'uploads', 'blog-posts', 'images')); // Save images in 'uploads/blog-posts/images'
+      } else if (file.mimetype.startsWith('video/')) {
+        cb(null, path.join(__dirname, '..', 'uploads', 'blog-posts', 'videos')); // Save videos in 'uploads/blog-posts/videos'
+      } else {
+        cb(new Error('Unsupported file type'), false);
+      }
     },
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const sanitizedFilename = file.originalname.replace(/\s+/g, '_'); // Replace spaces with underscores
       cb(null, uniqueSuffix + '-' + sanitizedFilename); // Unique filename
-    }
+    },
   }),
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true); // Accept only image files
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+      cb(null, true); // Accept only image and video files
     } else {
-      cb(new Error('Only image files are allowed!'), false);
+      cb(new Error('Only image and video files are allowed!'), false);
     }
-  }
+  },
 });
 
 router.get('/api/blog-posts', async (req, res) => {
@@ -80,16 +88,23 @@ router.delete('/api/blog-posts/:id', async (req, res) => {
 // POST route to create a new blog post
 router.post(
   '/api/craftexblogposts',
-  upload2.single('image'), // Single file upload for the blog post image
+  upload2.fields([
+    { name: 'featuredImage', maxCount: 1 }, // Featured image
+    { name: 'video', maxCount: 1 }, // Video upload
+  ]),
   [
     // Validation middleware using express-validator
     body('title').notEmpty().withMessage('Title is required'),
     body('excerpt').notEmpty().withMessage('Excerpt is required'),
     body('content').notEmpty().withMessage('Content is required'),
     body('author').notEmpty().withMessage('Author ID is required'),
+    body('category').optional().isMongoId().withMessage('Invalid category ID'),
     body('tags').optional().isArray().withMessage('Tags must be an array of strings'),
+    body('youtubeUrl').optional().isURL().withMessage('Invalid YouTube URL'),
+    body('status').optional().isIn(['draft', 'published']).withMessage('Invalid status'),
   ],
   async (req, res) => {
+
     try {
       // Validate request body
       const errors = validationResult(req);
@@ -97,7 +112,7 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { title, excerpt, content, author, tags } = req.body;
+      const { title, excerpt, content, author, category, tags, youtubeUrl, status } = req.body;
 
       // Validate author
       const existingAuthor = await craftexUser.findById(author);
@@ -105,9 +120,20 @@ router.post(
         return res.status(400).json({ message: 'Invalid author ID' });
       }
 
-      // Get file path for the uploaded image
-      const imageUrl = req.file
-        ? `/uploads/blog-posts/${req.file.filename}`
+      // Validate category if provided
+      if (category) {
+        const existingCategory = await craftexBlogPostCategory.findById(category);
+        if (!existingCategory) {
+          return res.status(400).json({ message: 'Invalid category ID' });
+        }
+      }
+
+      // Get file paths for the uploaded files
+      const featuredImageUrl = req.files['featuredImage']
+        ? `/uploads/blog-posts/images/${req.files['featuredImage'][0].filename}`
+        : null;
+      const videoUrl = req.files['video']
+        ? `/uploads/blog-posts/videos/${req.files['video'][0].filename}`
         : null;
 
       // Create new blog post
@@ -115,9 +141,13 @@ router.post(
         title,
         excerpt,
         content,
-        imageUrl,
+        featuredImage: featuredImageUrl,
+        videoUrl,
+        youtubeUrl,
         author,
+        category,
         tags: tags || [], // Initialize tags as an empty array if not provided
+        status: status || 'draft', // Default to 'draft' if not provided
       });
 
       // Save blog post to the database

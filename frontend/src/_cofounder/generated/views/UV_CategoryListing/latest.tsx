@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch, add_to_cart, add_notification } from '@/store/main';
-import axios from 'axios';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Zoom } from 'swiper/modules';
 import { debounce } from 'lodash';
 import axiosInstance from '@/utils/axiosInstance';
 import baseUrl from '../../../../utils/baseURL.js'
@@ -32,6 +33,7 @@ const useProducts = (categoryUid: string, filters: any, sort: string, page: numb
             ...filters
           }
         });
+        console.log(response,"this is category ui ")
         setProducts(response.data.products);
         setPagination({
           currentPage: response.data.page,
@@ -51,7 +53,9 @@ const useProducts = (categoryUid: string, filters: any, sort: string, page: numb
 
   return { products, loading, error, pagination };
 };
-
+useEffect(()=>{
+  console.log("this is the runs once data");
+},[])
 const UV_CategoryListing: React.FC = () => {
   const { category_uid } = useParams<{ category_uid: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -82,8 +86,8 @@ const UV_CategoryListing: React.FC = () => {
   useEffect(() => {
     const fetchCategoryInfo = async () => {
       try {
-        const response = await axiosInstance.get(`api/craftexcategories/filter/${category_uid}`);
-        console.log(response.data,"this is the responsen data");
+        const response = await axiosInstance.get(`/api/craftexcategories/filter/${category_uid}`);
+        
         setCategoryInfo(response.data);
       } catch (err) {
         console.error('Failed to fetch category info:', err);
@@ -141,7 +145,7 @@ const UV_CategoryListing: React.FC = () => {
     }
 
     try {
-      await axios.post('wishlist', { product_uid: productId }, {
+      await axiosInstance.post('/api/wishlist', { product_uid: productId }, {
         headers: { Authorization: `Bearer ${auth_token}` }
       });
       dispatch(add_notification({
@@ -173,6 +177,7 @@ const UV_CategoryListing: React.FC = () => {
 
   return (
     <>
+      <div style={{backgroundColor: 'rgb(160 159 182)'}}>
       <div className="container mx-auto px-4 py-8" style={{ paddingTop: '7rem' }}>
         <nav className="text-sm breadcrumbs mb-4" >
           <ul>
@@ -300,7 +305,7 @@ const UV_CategoryListing: React.FC = () => {
                 <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-${viewMode} gap-6`}>
                   {products.map((product) => (
                     <div key={product._id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-                      <img src={baseUrl + product.thumbnail} alt={product.name} className="w-full h-48 object-cover" />
+                      <img src={baseUrl + product.images[0]} alt={product.name} className="w-full h-48 object-cover" />
                       <div className="p-4">
                         <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
                         <p className="text-gray-600 mb-2">{product.designerName}</p>
@@ -377,10 +382,35 @@ const UV_CategoryListing: React.FC = () => {
               </button>
             </div>
 
-            <img src={baseUrl + quickViewProduct.thumbnail} alt={quickViewProduct.name} className="w-full h-64 object-cover mb-4 rounded" />
-            <p className="text-gray-600 mb-2">{quickViewProduct.designer.first_name} {quickViewProduct.designer.last_name}</p>
-            <p className="text-xl font-bold mb-4" style={{color:"#374151"}}>${quickViewProduct.price.toFixed(2)}</p>
-            <p className="text-gray-700 mb-4">{quickViewProduct.description}</p>
+            {/* Image Gallery */}
+                    <div className="relative">
+                    
+                    <Swiper
+                      modules={[Navigation, Pagination, Zoom]}
+                      navigation
+                      pagination={{ clickable: true }}
+                      zoom={{ maxRatio: 3 }}
+                      className="h-96 bg-gray-100 rounded-lg"
+                    >
+                      
+                      {quickViewProduct.images.map((image: any, index: number) => (
+                        <SwiperSlide key={index}>
+                          <div className="swiper-zoom-container">
+                            <img
+                              src={baseUrl + image}
+                              alt={`${quickViewProduct.name} - Image ${index + 1}`}
+                              className="object-contain w-full h-full"
+                            />
+                            
+                    
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                  </div>
+                      <p className="text-gray-600 mb-2">{quickViewProduct?.designer?.first_name} {quickViewProduct?.designer?.last_name}</p>
+            <p className="text-xl font-bold mb-4" style={{color:"#374151"}}>${quickViewProduct?.price?.toFixed(2)}</p>
+            <p className="text-gray-700 mb-4">{quickViewProduct?.description}</p>
             <div className="flex space-x-4">
               <button
                 onClick={() => handleAddToCart(quickViewProduct)}
@@ -398,6 +428,7 @@ const UV_CategoryListing: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </>
   );
 };

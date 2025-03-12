@@ -169,6 +169,7 @@ const craftextutorialCategoryRoutes = require('../routes/craftextutorialCategory
 const craftexskillLevelRoutes = require('../routes/craftexskillLevelRoutes');
 const craftexforumCategoryRoutes = require('../routes/craftexforumCategoryRoutes');
 const craftexProjectCategoryRoutes = require('../routes/craftexProjectCategoryRoutes');
+const craftexBlogPostCategoryRoutes = require('../routes/craftexBlogPostCategoryRoutes');
 
 // -----------------subercraftex routes
 app.use('/', craftexProductRoutes);
@@ -219,6 +220,7 @@ app.use('/', craftextutorialCategoryRoutes);
 app.use('/', craftexskillLevelRoutes);
 app.use('/', craftexforumCategoryRoutes);
 app.use('/', craftexProjectCategoryRoutes);
+app.use('/', craftexBlogPostCategoryRoutes);
 
 //auth routes
 app.use('/api', require('../routes/userRouter'))

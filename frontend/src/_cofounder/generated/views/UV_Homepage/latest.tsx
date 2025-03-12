@@ -62,7 +62,7 @@ const UV_Homepage: React.FC = () => {
   }, []);
 
 
-
+console.log (categoryProducts, "this is what i have")
   const [activeIndex, setActiveIndex] = useState(0);
 
   // Function to go to the next slide
@@ -163,7 +163,7 @@ const UV_Homepage: React.FC = () => {
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {Object.entries(categoryProducts).map(([category, products]) => (
       <Link key={category} to={`/category/${category}`} className="category-tile">
-        {console.log(categoryProducts,"this is cat")}
+        {console.log(category,"this is cat")}
         <div className="relative h-48 rounded overflow-hidden">
           <img src={baseUrl + products[0]?.thumbnail} alt={category} className="w-full h-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
@@ -191,18 +191,66 @@ const UV_Homepage: React.FC = () => {
   </div>
 </section>
 
-        {/* Latest Blog Posts */}
-        <section className="latest-blog-posts mb-12 bg-[#F9FAFB] p-6 rounded-lg">
+      {/* Latest Blog Posts */}
+<section className="latest-blog-posts mb-12 bg-[#F9FAFB] p-6 rounded-lg">
   <h2 className="text-2xl font-bold mb-4 text-[#1F2937]">Latest from the Blog</h2>
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {latestBlogPosts.map((post) => (
-      <Link key={post._id} to={`/blog/${post.id}`} className="blog-post-card">
+      <Link key={post._id} to={`/blog/${post._id}`} className="blog-post-card">
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-          <img src={baseUrl + post.imageUrl} alt={post.title} className="w-full h-48 object-cover" loading="lazy" />
+          {/* Featured Image or Video Thumbnail */}
+          {post.featuredImage && (
+            <img
+              src={baseUrl + post.featuredImage}
+              alt={post.title}
+              className="w-full h-48 object-cover"
+              loading="lazy"
+            />
+          )}
+
+          {/* Video Embed (if videoUrl or youtubeUrl is present) */}
+          {!post.featuredImage && (post.videoUrl || post.youtubeUrl) && (
+            <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+              {post.videoUrl ? (
+                <video controls className="w-full h-full object-cover">
+                  <source src={baseUrl + post.videoUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <iframe
+                  src={`https://www.youtube.com/embed/${post.youtubeUrl.split('v=')[1]}`}
+                  title={post.title}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              )}
+            </div>
+          )}
+
+          {/* Fallback for No Image or Video */}
+          {!post.featuredImage && !post.videoUrl && !post.youtubeUrl && (
+            <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
+              No Media
+            </div>
+          )}
+
+          {/* Blog Post Content */}
           <div className="p-4">
             <h3 className="font-bold text-xl mb-2 text-[#1F2937]">{post.title}</h3>
             <p className="text-[#6B7280] mb-2">{post.excerpt}</p>
-            <p className="text-sm text-[#6B7280]">By {post.author ? `${post.author.first_name} ${post.author.last_name}` : 'Unknown Author'} on {new Date(post.publishDate).toLocaleDateString()}</p>
+
+            {/* Render HTML Content Safely */}
+            <div
+              className="text-[#6B7280] mb-2"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+
+            {/* Author and Publish Date */}
+            <p className="text-sm text-[#6B7280]">
+              By {post.author ? `${post.author.first_name} ${post.author.last_name}` : 'Unknown Author'} on{' '}
+              {new Date(post.publishDate).toLocaleDateString()}
+            </p>
           </div>
         </div>
       </Link>

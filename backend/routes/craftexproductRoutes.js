@@ -55,6 +55,7 @@ router.get('/api/products-all', async (req, res) => {
     if (category_uid) {
       // Find the category by its name to get its ObjectId
       const category = await craftexCategory.findOne({ name: category_uid });
+      
       if (!category) {
         return res.status(404).json({ success: false, message: 'Category not found' });
       }
@@ -251,7 +252,7 @@ router.post(
     body('dimensions.height').optional().isFloat({ min: 0 }).withMessage('Height must be a non-negative number'),
     body('weight').optional().isFloat({ min: 0 }).withMessage('Weight must be a non-negative number'),
     body('country_of_origin').optional().isString().withMessage('Country of origin must be a string'),
-    body('sustainability_metrics').optional().isObject().withMessage('Sustainability metrics must be an object'),
+    body('sustainability_metrics').notEmpty().withMessage('Sustainability metrics ID is required'),
   ],
   async (req, res) => {
     try {
@@ -362,7 +363,7 @@ router.post(
 );
 
 router.put('/api/craftexproducts/:id', async (req, res) => {
-  console.log('Received update request:', req.body); // Debugging log
+
   try {
     const { 
       variants, 

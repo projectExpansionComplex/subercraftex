@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-
 import { debounce } from 'lodash';
 import { RootState, AppDispatch, add_notification } from '@/store/main';
 import { Button } from "@/components/ui/button";
@@ -10,10 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Star, Search, PlusCircle } from 'lucide-react';
-import baseUrl from '../../../../utils/baseURL.js'
+import baseUrl from '../../../../utils/baseURL.js';
 import axiosInstance from '@/utils/axiosInstance';
-
-
 
 const UV_LearningCenter: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -58,30 +55,30 @@ const UV_LearningCenter: React.FC = () => {
   }, [selectedCategory, selectedSkillLevel, currentPage, searchQuery, dispatch]);
 
   // Debounce the fetchTutorials function
-const debouncedFetchTutorials = useCallback(debounce(fetchTutorials, 300), [fetchTutorials]);
+  const debouncedFetchTutorials = useCallback(debounce(fetchTutorials, 300), [fetchTutorials]);
 
- // Fetch tutorials when filters or pagination change
-useEffect(() => {
-  debouncedFetchTutorials();
-  return () => debouncedFetchTutorials.cancel(); // Cancel debounce on unmount
-}, [debouncedFetchTutorials]);
+  // Fetch tutorials when filters or pagination change
+  useEffect(() => {
+    debouncedFetchTutorials();
+    return () => debouncedFetchTutorials.cancel(); // Cancel debounce on unmount
+  }, [debouncedFetchTutorials]);
 
- // Fetch categories and skill levels on mount
-useEffect(() => {
-  const fetchCategoriesAndSkillLevels = async () => {
-    try {
-      const [categoriesResponse, skillLevelsResponse] = await Promise.all([
-        axiosInstance.get('/api/tutorial-categories'),
-        axiosInstance.get('/api/skill-levels'),
-      ]);
-      setCategories(categoriesResponse.data);
-      setSkillLevels(skillLevelsResponse.data);
-    } catch (error) {
-      console.error('Error fetching categories and skill levels:', error);
-    }
-  };
-  fetchCategoriesAndSkillLevels();
-}, []);
+  // Fetch categories and skill levels on mount
+  useEffect(() => {
+    const fetchCategoriesAndSkillLevels = async () => {
+      try {
+        const [categoriesResponse, skillLevelsResponse] = await Promise.all([
+          axiosInstance.get('/api/tutorial-categories'),
+          axiosInstance.get('/api/skill-levels'),
+        ]);
+        setCategories(categoriesResponse.data);
+        setSkillLevels(skillLevelsResponse.data);
+      } catch (error) {
+        console.error('Error fetching categories and skill levels:', error);
+      }
+    };
+    fetchCategoriesAndSkillLevels();
+  }, []);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -126,7 +123,7 @@ useEffect(() => {
       return;
     }
     try {
-      await axiosInstance.post(`/api/educational-resources/${tutorialId}/rate`, { rating });
+      await axiosInstance.post(`/api/educational-resources/${tutorialId}/rate`, { rating, userId: current_user._id });
       dispatch(add_notification({
         id: Date.now().toString(),
         type: 'success',
@@ -146,7 +143,7 @@ useEffect(() => {
   const handleUpdateProgress = async (tutorialId: string, progress: number) => {
     if (!current_user) return;
     try {
-      await axiosInstance.put(`/api/educational-resources/${tutorialId}/progress`, { progress });
+      await axiosInstance.put(`/api/educational-resources/${tutorialId}/progress`, { progress, userId: current_user._id });
       fetchTutorials();
     } catch (error) {
       console.error('Error updating progress:', error);
@@ -205,7 +202,7 @@ useEffect(() => {
                     <SelectContent>
                       <SelectItem value="all">All Skill Levels</SelectItem>
                       {skillLevels.map((level) => (
-                        <SelectItem key={level.id} value={level.id}>{level.name}</SelectItem>
+                        <SelectItem key={level._id} value={level._id}>{level.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -229,21 +226,25 @@ useEffect(() => {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {tutorials.map((tutorial) => (
-                    <div key={tutorial.uid} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                      <img src={baseUrl + tutorial.thumbnail || `https://picsum.photos/seed/${tutorial._id}/400/225`} alt={tutorial.title} className="w-full h-48 object-cover" />
+                    <div key={tutorial._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                      <img
+                        src={tutorial.thumbnail ? baseUrl + tutorial.thumbnail : `https://picsum.photos/seed/${tutorial._id}/400/225`}
+                        alt={tutorial.title}
+                        className="w-full h-48 object-cover"
+                      />
                       <div className="p-6">
                         <h2 className="text-xl font-semibold mb-2 dark:text-white">{tutorial.title}</h2>
                         <p className="text-gray-600 dark:text-gray-300 mb-4">{tutorial.description}</p>
                         <div className="flex flex-wrap gap-2 mb-4">
-                          <Badge variant="secondary">{tutorial.category}</Badge>
-                          <Badge variant="outline">{tutorial.skill_level}</Badge>
+                          <Badge variant="secondary">{tutorial.category?.name}</Badge>
+                          <Badge variant="outline">{tutorial.skill_level?.name}</Badge>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
                                 key={star}
-                                onClick={() => handleRateTutorial(tutorial.uid, star)}
+                                onClick={() => handleRateTutorial(tutorial._id, star)}
                                 className={`cursor-pointer ${
                                   star <= tutorial.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
                                 }`}
@@ -251,19 +252,19 @@ useEffect(() => {
                               />
                             ))}
                           </div>
-                          <Button onClick={() => handleTutorialSelect(tutorial.uid)}>
+                          <Button onClick={() => handleTutorialSelect(tutorial._id)}>
                             Start Learning
                           </Button>
                         </div>
-                        {current_user && tutorial.user_progress !== undefined && (
+                        {current_user && tutorial.user_progress && (
                           <div className="mt-4">
                             <div className="bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                               <div
                                 className="bg-purple-600 h-2.5 rounded-full"
-                                style={{ width: `${tutorial.user_progress}%` }}
+                                style={{ width: `${tutorial.user_progress.progress}%` }}
                               ></div>
                             </div>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">{tutorial.user_progress}% complete</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">{tutorial.user_progress.progress}% complete</span>
                           </div>
                         )}
                       </div>
@@ -305,17 +306,17 @@ useEffect(() => {
             <div className="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-full overflow-y-auto">
               <div className="p-6">
                 <h2 className="text-2xl font-bold mb-4 dark:text-white">{selectedTutorial.title}</h2>
-                {selectedTutorial.content_type === 'video' ? (
+                {selectedTutorial.type === 'video' ? (
                   <div className="aspect-w-16 aspect-h-9 mb-4">
                     <iframe
-                      src={baseUrl + selectedTutorial.content_url}
+                      src={selectedTutorial.videoType === 'youtube' ? selectedTutorial.videoUrl : baseUrl + selectedTutorial.videoFile}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       className="w-full h-full"
                     ></iframe>
                   </div>
                 ) : (
-                  <div className="prose max-w-none mb-4 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: selectedTutorial.content }}></div>
+                  <div className="prose max-w-none mb-4 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: selectedTutorial.description }}></div>
                 )}
                 {current_user && (
                   <div className="mb-4">
@@ -324,11 +325,11 @@ useEffect(() => {
                       type="range"
                       min="0"
                       max="100"
-                      value={selectedTutorial.user_progress || 0}
-                      onChange={(e) => handleUpdateProgress(selectedTutorial.uid, parseInt(e.target.value))}
+                      value={selectedTutorial.user_progress?.progress || 0}
+                      onChange={(e) => handleUpdateProgress(selectedTutorial._id, parseInt(e.target.value))}
                       className="w-full"
                     />
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{selectedTutorial.user_progress || 0}% complete</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{selectedTutorial.user_progress?.progress || 0}% complete</span>
                   </div>
                 )}
                 <Button onClick={() => setSelectedTutorial(null)}>
