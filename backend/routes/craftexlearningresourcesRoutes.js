@@ -7,6 +7,12 @@ const craftexUser = require('../models/userModel')
 const craftexCustomRequest = require('../models/craftexCustomRequest')
 const path = require('path')
 const sharp = require('sharp');
+const craftexTutorialCategory = require('../models/craftexTutorialCategory');
+const craftexSkillLevel = require('../models/craftexSkillLevel');
+
+
+
+
 // Multer configuration for file blogpost
 const upload3 = multer({
   storage: multer.diskStorage({
@@ -183,7 +189,8 @@ router.post(
 router.get('/api/educational-resources', async (req, res) => {
   try {
     const { category, skill_level, page = 1, limit = 12, search } = req.query;
-
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
     // Build the query object
     const query = {};
     if (category && category !== 'all') query.category = category;
@@ -200,9 +207,12 @@ router.get('/api/educational-resources', async (req, res) => {
 
     // Fetch resources with filtering, sorting, and pagination
     const resources = await craftexLearningResource.find(query)
-      .populate('createdBy', 'name email')
-      .skip(skip)
-      .limit(parseInt(limit));
+    .populate('createdBy', 'name email') // Populate the user who created the resource
+    .populate('skill_level', 'name description') // Populate the skill level
+    .populate('category', 'name description') // Populate the category
+    .sort({ [sortBy]: sortOrder }) // Sort the results
+    .skip(skip) // Apply pagination (skip)
+    .limit(parseInt(limit)); // Apply pagination (limit)
 
     // Get total count of resources (for pagination metadata)
     const totalCount = await craftexLearningResource.countDocuments(query);
@@ -399,7 +409,7 @@ router.put(
 
       // Save updated learning resource
       const updatedLearningResource = await learningResource.save();
-      consol.log(updatedLearningResource,"is ther this")
+   
       // Return the updated learning resource
       res.status(200).json(updatedLearningResource);
     } catch (err) {

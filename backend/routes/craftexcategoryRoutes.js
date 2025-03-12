@@ -64,7 +64,7 @@ router.get('/api/category-products', async (req, res) => {
 
 // GET route to filter categories by name using a route parameter
 router.get('/api/craftexcategories/filter/:name', async (req, res) => {
-  console.log("I hit this endpoint");
+
   try {
     const { name } = req.params; // Get the name from route parameters
 
