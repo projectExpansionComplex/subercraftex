@@ -16,7 +16,7 @@ describe('Tag Routes', () => {
           slug: 'test-tag',
         });
 
-      expect(res.statusCode).toEqual(200);
+      expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('message', 'Tag created successfully');
     });
   });

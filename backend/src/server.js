@@ -172,55 +172,55 @@ const craftexProjectCategoryRoutes = require('../routes/craftexProjectCategoryRo
 const craftexBlogPostCategoryRoutes = require('../routes/craftexBlogPostCategoryRoutes');
 
 // -----------------subercraftex routes
-app.use('/', craftexProductRoutes);
+app.use('/api', craftexProductRoutes);
 
 //subercraftext correntrouts
 //  ---------------------------------------------------------------- CRUD Operations for Categories
-app.use('/', craftexcategoryRoutes);
+app.use('/api', craftexcategoryRoutes);
 // --------------------------------------------------------------------------------------------------------------------------------CRUD Operations for Blog Posts
-app.use('/', craftexblogRoutes);
+app.use('/api', craftexblogRoutes);
 //----------------------------------------------------------------working with Cart
-app.use('/', craftexCartRoutes);
+app.use('/api', craftexCartRoutes);
 //---------------------------------------------------------------customRequest
-app.use('/', craftexcustomrequestsRoutes);
+app.use('/api', craftexcustomrequestsRoutes);
 //---------------------------------------------------------------------//working on desinger
-app.use('/', craftexdesignerRoutes);
+app.use('/api', craftexdesignerRoutes);
 //----------------------------------------------------------------events------------------------------------------------------------
-app.use('/', craftexeventsRoutes);
+app.use('/api', craftexeventsRoutes);
 //---------------------------------------------------------------forum  --------------------------------------------------------------
-app.use('/', craftexforumsRoutes);
+app.use('/api', craftexforumsRoutes);
 
 //----------------------------------------------------------------inspiration-----------------------------------------------------------------------
-app.use('/', craftexinspirationsRoutes);
+app.use('/api', craftexinspirationsRoutes);
 
 //----------------------------------------------------------------learning resource----------------------------------------------------------------
-app.use('/', craftexlearningresourcesRoutes);
+app.use('/api', craftexlearningresourcesRoutes);
 
 
 //----------------------------------------------------------------notification--------------------------------------------------------------------
-app.use('/', craftexnotificationsRoutes);
+app.use('/api', craftexnotificationsRoutes);
 //----------------------------------------------------------------orders--------------------------------------------------------------
-app.use('/', craftexordersRoutes);
+app.use('/api', craftexordersRoutes);
 //-------------------------------------------------oreder tracking--------
-app.use('/', craftexordertrackingsRoutes);
+app.use('/api', craftexordertrackingsRoutes);
 //----------------------------------------------crud onproject model
-app.use('/', craftexprojectsRoutes);
+app.use('/api', craftexprojectsRoutes);
 // ----------------------------------------------revies----------
-app.use('/', craftexreviewsRoutes);
+app.use('/api', craftexreviewsRoutes);
 //------------------------------------------------sustainability-----------------
-app.use('/', craftexsustainabilityRoutes);
+app.use('/api', craftexsustainabilityRoutes);
 
 //--------------------virtual show room -----------------------
 
-app.use('/', craftexvirtualshowroomsRoutes);
+app.use('/api', craftexvirtualshowroomsRoutes);
 //--------------------------------------------wishlist------------------------------------
-app.use('/', craftexwishlistRoutes);
-app.use('/', craftexuserRoutes);
-app.use('/', craftextutorialCategoryRoutes);
-app.use('/', craftexskillLevelRoutes);
-app.use('/', craftexforumCategoryRoutes);
-app.use('/', craftexProjectCategoryRoutes);
-app.use('/', craftexBlogPostCategoryRoutes);
+app.use('/api', craftexwishlistRoutes);
+app.use('/api', craftexuserRoutes);
+app.use('/api', craftextutorialCategoryRoutes);
+app.use('/api', craftexskillLevelRoutes);
+app.use('/api', craftexforumCategoryRoutes);
+app.use('/api', craftexProjectCategoryRoutes);
+app.use('/api', craftexBlogPostCategoryRoutes);
 
 //auth routes
 app.use('/api', require('../routes/userRouter'))

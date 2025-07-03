@@ -13,8 +13,8 @@ describe('Announcement Routes', () => {
         .post('/api/announcements')
         .send({
           title: 'New Announcement',
-          content: 'This is a test announcement.',
-          author: 'Admin',
+          message: 'This is a test announcement.',
+          sentAt: new Date(),
         });
 
       expect(res.statusCode).toEqual(201);
@@ -83,7 +83,7 @@ describe('Announcement Routes', () => {
       const res = await request(app).delete(`/api/announcements/${announcement._id}`);
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('message' , 'Announcement deleted successfully');
+      expect(res.body).toHaveProperty('message', 'Announcement deleted successfully');
     });
   });
 });

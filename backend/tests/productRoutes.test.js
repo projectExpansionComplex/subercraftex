@@ -1,10 +1,22 @@
 const request = require('supertest');
 const app = require('../src/server');
 const Product = require('../models/productModel');
+const Category = require('../models/categoryModel');
+const mongoose = require('mongoose');
 
 describe('Product Routes', () => {
+  let category;
+
+  beforeEach(async () => {
+    category = await Category.create({
+      name: 'Test Category',
+      slug: 'test-category',
+    });
+  });
+
   afterEach(async () => {
     await Product.deleteMany({});
+    await Category.deleteMany({});
   });
 
   describe('POST /api/products', () => {
@@ -15,7 +27,7 @@ describe('Product Routes', () => {
           name: 'Test Product',
           price: 100,
           description: 'This is a test product.',
-          category: 'someCategoryId', // Assuming a valid category ID
+          category: category._id,
         });
 
       expect(res.statusCode).toEqual(200);
@@ -29,7 +41,7 @@ describe('Product Routes', () => {
         name: 'Test Product',
         price: 100,
         description: 'This is a test product.',
-        category: 'someCategoryId', // Assuming a valid category ID
+        category: category._id,
       });
 
       const res = await request(app).get('/api/products');
@@ -46,6 +58,7 @@ describe('Product Routes', () => {
         name: 'Test Product',
         price: 100,
         description: 'This is a test product.',
+        category: category._id,
       });
 
       const res = await request(app).get(`/api/products/${product._id}`);
@@ -61,6 +74,7 @@ describe('Product Routes', () => {
         name: 'Test Product',
         price: 100,
         description: 'This is a test product.',
+        category: category._id,
       });
 
       const res = await request(app)
@@ -80,6 +94,7 @@ describe('Product Routes', () => {
         name: 'Test Product',
         price: 100,
         description: 'This is a test product.',
+        category: category._id,
       });
 
       const res = await request(app).delete(`/api/products/${product._id}`);

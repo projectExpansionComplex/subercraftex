@@ -13,14 +13,13 @@ describe('Coupon Routes', () => {
         .post('/api/coupons')
         .send({
           code: 'TESTCOUPON',
-          discount: 10,
-          validFrom: new Date(),
-          validUntil: new Date(Date.now() + 86400000), // 1 day from now
           discountValue: 10,
           discountType: 'percentage',
+          validFrom: new Date(),
+          validUntil: new Date(Date.now() + 86400000), // 1 day from now
         });
 
-      expect(res.statusCode).toEqual(200);
+      expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('message', 'Coupon created successfully');
     });
   });
@@ -29,11 +28,10 @@ describe('Coupon Routes', () => {
     it('should get all coupons', async () => {
       await Coupon.create({
         code: 'TESTCOUPON',
-        discount: 10,
-        validFrom: new Date(),
-        validUntil: new Date(Date.now() + 86400000),
         discountValue: 10,
         discountType: 'percentage',
+        validFrom: new Date(),
+        validUntil: new Date(Date.now() + 86400000),
       });
 
       const res = await request(app).get('/api/coupons');
