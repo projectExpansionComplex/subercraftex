@@ -53,8 +53,7 @@ const jwt = require('jsonwebtoken')
 
   // Middleware to authenticate user via JWT
   exports.auth = async (req, res, next)=>{
-    console.log("auth middleware")
-    console.log(req, "this is the request")
+    
     try {
       const token = req.header('Authorization')
       if(!token){

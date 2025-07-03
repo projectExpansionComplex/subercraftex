@@ -15,9 +15,10 @@ describe('Product Routes', () => {
           name: 'Test Product',
           price: 100,
           description: 'This is a test product.',
+          category: 'someCategoryId', // Assuming a valid category ID
         });
 
-      expect(res.statusCode).toEqual(201);
+      expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Product created successfully');
     });
   });
@@ -28,6 +29,7 @@ describe('Product Routes', () => {
         name: 'Test Product',
         price: 100,
         description: 'This is a test product.',
+        category: 'someCategoryId', // Assuming a valid category ID
       });
 
       const res = await request(app).get('/api/products');

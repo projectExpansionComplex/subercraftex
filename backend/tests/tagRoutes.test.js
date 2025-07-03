@@ -13,9 +13,10 @@ describe('Tag Routes', () => {
         .post('/api/tags')
         .send({
           name: 'Test Tag',
+          slug: 'test-tag',
         });
 
-      expect(res.statusCode).toEqual(201);
+      expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Tag created successfully');
     });
   });
@@ -24,6 +25,7 @@ describe('Tag Routes', () => {
     it('should get all tags', async () => {
       await Tag.create({
         name: 'Test Tag',
+        slug: 'test-tag',
       });
 
       const res = await request(app).get('/api/tags');

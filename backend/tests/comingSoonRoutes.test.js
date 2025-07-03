@@ -13,6 +13,9 @@ describe('Coming Soon Routes', () => {
         .post('/api/coming-soon')
         .send({
           email: 'test@example.com',
+          title: 'Test Title',
+          description: 'Test Description',
+          launchDate: new Date(),
         });
 
       expect(res.statusCode).toEqual(201);
@@ -24,6 +27,9 @@ describe('Coming Soon Routes', () => {
     it('should get all subscribed emails', async () => {
       await ComingSoon.create({
         email: 'test@example.com',
+        title: 'Test Title',
+        description: 'Test Description',
+        launchDate: new Date(),
       });
 
       const res = await request(app).get('/api/coming-soon');

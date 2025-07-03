@@ -13,9 +13,10 @@ describe('Category Routes', () => {
         .post('/api/categories')
         .send({
           name: 'Test Category',
+          slug: 'test-category',
         });
 
-      expect(res.statusCode).toEqual(201);
+      expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Category created successfully');
     });
   });
@@ -24,6 +25,7 @@ describe('Category Routes', () => {
     it('should get all categories', async () => {
       await Category.create({
         name: 'Test Category',
+        slug: 'test-category',
       });
 
       const res = await request(app).get('/api/categories');

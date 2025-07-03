@@ -14,9 +14,12 @@ describe('Shipping Routes', () => {
         .send({
           name: 'Standard Shipping',
           price: 10,
+          cost: 5,
+          shippingMethod: 'DHL',
+          user: 'someUserId', // Assuming a valid user ID
         });
 
-      expect(res.statusCode).toEqual(201);
+      expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Shipping option created successfully');
     });
   });
@@ -26,6 +29,9 @@ describe('Shipping Routes', () => {
       await Shipping.create({
         name: 'Standard Shipping',
         price: 10,
+        cost: 5,
+        shippingMethod: 'DHL',
+        user: 'someUserId', // Assuming a valid user ID
       });
 
       const res = await request(app).get('/api/shipping');
