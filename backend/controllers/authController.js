@@ -6,20 +6,15 @@ const nodemailer = require("nodemailer");
 const VerificationToken = require("../models/verificationTokenModel");
 const ResetToken = require("../models/resetTokenModel");
 const ResetToken2 = require("../models/resetTokenModel2");
-
+const { v4: uuidv4 } = require('uuid');
 const crypto = require("crypto");
+const mongoose = require('mongoose');
 
 // check email validity
 const checkEmailValidity = (email) => {
   // don't remember from where i copied this code, but this works.
-  let re =
-    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-
-  if (re.test(email)) {
-    return true;
-  } else {
-    return false;
-  }
+  let re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
 };
 
 //creating access token
@@ -75,7 +70,7 @@ const generateEmailTemplate = (code) => {
       <div>
           <div style="max-width:620px; margin:0 auto; font-family:sans-serif; color:#272727;">
             <h1 style="background:#f6f6f6; padding:10px; text-align:center; color:#272727;">
-            We are delighted to welcome you to our suberDesign shop
+            We are delighted to welcome you to our suberCraftex shop
 
             </h1>
             <p>Please Verify Your Email To Continue Your Verification code is:</p>
@@ -241,103 +236,69 @@ const createRandomBytes = () =>
 
 const authCtrl = {
   register: async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      const { fullname, username, email, password, gender } = req.body;
-     
-      //check on the username
-      if (!username) {
-        res
-          .status(400)
-          .json({ success: true, msg: "please provide a username" });
-        return next(
-          new ErrorResponse("please provide a username", 400)
-        );
+      const { username, email, password, user_type, first_name, last_name, profile_picture_url, bio, location, specialties, years_experience, portfolio_link, company_name, company_size, industry } = req.body;
+      
+      // Validate inputs (similar to your previous validation logic)
+      if (!email || !password || !first_name || !last_name) {
+        return res.status(409).json({ msg: "Please provide all required fields!" });
       }
 
-      if (username.length < 3 || username.length > 20) {
-        res
-          .status(400)
-          .json({
-            success: true,
-            msg: "Name must be 3 to 20 characters long!",
-          });
-        return next(
-          new ErrorResponse("Name must be 3 to 20 characters long!", 400)
-        );
-      }
-       
+       // Check if the email is already registered
+       const existingUser = await Users.findOne({ email: email.toLowerCase() });
+       if (existingUser) {
+        return res.status(409).json({ message: 'User already exists' });
+         return next(new ErrorResponse("User already exists", 409));  // User already exists
+       }
 
-      //check on email
-      if (!email) {
-        res.status(400).json({ success: true, msg: "please provide an email" });
-        return next(new ErrorResponse("please provide an email", 400));
-      }
-      let newEmail = email.toLowerCase().replace(/ /g, "")
+// Check if the email is valid
+      let newEmail = email.toLowerCase().trim(); // Trim spaces
       if (checkEmailValidity(newEmail) === false) {
-        res.status(400).json({ msg: "Invalid email." });
-        return next(new ErrorResponse("Invalid email.", 400));
+        res.status(409).json({ message: "Invalid data entry." });
+        return next(new ErrorResponse("Invalid data entry.", 409));
       }
-      
-      const user_email = await Users.findOne({ email:newEmail });
-      
-      if (user_email) {
-        res.status(400).json({ msg: "This email already exists." });
-        return next(new ErrorResponse("This email already exists.", 400));
-      }
-
-      //this removes spaces form user name and lowercase all the letters
-      let newUserName = username.toLowerCase().replace(/ /g, "");
-       
-      const user_name = await Users.findOne({ username: newUserName });
-
-      if (user_name) {
-        res.status(400).json({ msg: "This user name already exists." });
-        return next(new ErrorResponse("This user name already exists.", 400));
-      }
-
-      //check on password
-      if (!password) {
-        res
-          .status(400)
-          .json({ success: true, msg: "please provide a password" });
-        return next(new ErrorResponse("please provide a password", 400));
-      }
+      // Check if the password is valid
 
       if (password.length < 6) {
         res
-          .status(400)
+          .status(409)
           .json({
             success: true,
-            msg: "password must be atleast 6 characters",
+            message: "password must be atleast 6 characters",
           });
         return next(
-          new ErrorResponse("password must be atleast 6 characters", 400)
+          new ErrorResponse("password must be atleast 6 characters", 409)
         );
       }
 
       //encripting the Password
       const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(password, salt);
+      const hashedPassword = await bcrypt.hash(password, salt);
      
-      //creating new user
+      
+
+      // Create a new user (with additional fields)
+      const uid = uuidv4();
       const newUser = new Users({
-        fullname,
-        username: newUserName,
-        email:newEmail,
-        password: passwordHash,
-        gender,
-      });
-
-      //creating access token
-      const access_token = createAccessToken({ id: newUser._id });
-      // creating refresh token
-      const refresh_token = createRefreshToken({ id: newUser._id });
-      res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
-
-      res.cookie("refreshtoken", refresh_token, {
-        httpOnly: true,
-        path: "/api/refresh_token",
-        maxAge: 30 * 24 * 60 * 60 * 1000, //30days
+        uid,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        user_type,
+        first_name,
+        last_name,
+        profile_picture_url,
+        bio,
+        location,
+        specialties: specialties ? JSON.stringify(specialties) : [],
+        years_experience,
+        portfolio_link,
+        company_name,
+        company_size,
+        industry,
+        created_at: Date.now(),
+        updated_at: Date.now(),
       });
 
       const OTP = generateOTP();
@@ -345,25 +306,51 @@ const authCtrl = {
       const salt2 = await bcrypt.genSalt(10);
       const OTPHash = await bcrypt.hash(OTP, salt2);
 
-      const verificationToken = new VerificationToken({
-        owner: newUser._id,
-        token: OTPHash,
-      });
 
-      //save verification token
-      await verificationToken.save();
-      //saving the user
-      await newUser.save();
+      const verificationToken = new VerificationToken({
+              owner: newUser._id,
+              token: OTPHash,
+            });
+
+      //creating access token
+      const access_token = createAccessToken({ id: newUser._id });
+      // creating refresh token
+      const refresh_token = createRefreshToken({ id: newUser._id });
+      
+
+    
+     
+      // //save verification token
+      // await verificationToken.save();
+      // //saving the user
+      // await newUser.save();
+
+       // Save user and token in a transaction
+    await newUser.save({ session });
+    await verificationToken.save({ session });
+
+     // Commit the transaction
+     await session.commitTransaction();
+     session.endSession();
+
       //sending mail
       mailTransport().sendMail({
-        form: "suberDesign@suberdesign.com",
+        form: "info@subercraftex.com",
         to: newUser.email,
         subject: "Verify your email account",
         html: generateEmailTemplate(OTP),
       });
 
+      res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
+
+      res.cookie("refreshtoken", refresh_token, {
+        httpOnly: true,
+        path: "/api/refresh_token",
+        maxAge: 30 * 24 * 60 * 60 * 1000, //30days
+      });
+      // Return success response
       res.status(201).json({
-        msg: "Register Success!",
+        message: "User created successfully",
         access_token,
         refresh_token,
         user: {
@@ -372,7 +359,12 @@ const authCtrl = {
         },
       });
     } catch (err) {
-      return res.status(500).json({ msg: err.message });
+      // return res.status(500).json({ message: err.message });
+      // Rollback the transaction on error
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Error creating user:', err);
+    res.status(500).json({ message: err.message });
     }
   },
   verifyEmail: async (req, res, next) => {
@@ -418,12 +410,12 @@ const authCtrl = {
     await user.save();
 
     mailTransport().sendMail({
-      form: "suberDesignVerification@suberDesign.com",
+      form: "suberCraftexVerification@suberCraftex.com",
       to: user.email,
       subject: "Welcome Email",
       html: plainEmailTemplate(
         "Email Verified Successfully",
-        "Thanks for connecting with suberDesign"
+        "Thanks for connecting with suberCraftex"
       ),
     });
 
@@ -438,74 +430,71 @@ const authCtrl = {
   login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
-      let loginEmail = email.toLowerCase()
-      //check on email
-      if (!email) {
-        res.status(400).json({ success: true, msg: "please provide an email" });
-        return next(new ErrorResponse("please provide an email", 400));
-      }
+     
+      
+      // Validate email presence
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Please provide an email" });
+    }
 
-      if (checkEmailValidity(loginEmail) === false) {
-        res.status(400).json({ msg: "Invalid email." });
-        return next(new ErrorResponse("Invalid email.", 400));
-      }
+    
+    let loginEmail = email.toLowerCase().trim();
+    
 
-      const user = await Users.findOne({ email:loginEmail }).select("+password");
+    // Validate email format
+    if (!checkEmailValidity(loginEmail)) {
+      return res.status(400).json({ success: false, message: "Invalid email format" });
+    }
 
-      if (!user) {
-        res.status(400).json({ msg: "Invalid Login credentials" });
-        return next(new ErrorResponse("Invalid Login credentials.", 400));
-      }
+       // Check if user exists
+    const user = await Users.findOne({ email: loginEmail }).select("+password");
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Invalid login credentials" });
+    }
 
-      //check on password
-      if (!password) {
-        res
-          .status(400)
-          .json({ success: true, msg: "Invalid Login credentials" });
-        return next(new ErrorResponse("Invalid Login credentials", 400));
-      }
+     // Validate password presence
+    if (!password) {
+      return res.status(400).json({ success: false, message: "Please provide a password" });
+    }
 
-      // comparing passwords if they match
-      const isMatch = await bcrypt.compare(password, user.password);
+       // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Invalid login credentials" });
+    }
 
-      if (!isMatch) {
-        res
-          .status(400)
-          .json({ success: true, msg: "Invalid Login credentials" });
-        return next(new ErrorResponse("Invalid Login credentials", 400));
-      }
+        // Create access and refresh tokens
+        const access_token = createAccessToken({ id: user._id });
+        const refresh_token = createRefreshToken({ id: user._id });
+    
+        // Clear and set refresh token cookie
+    res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
+    res.cookie("refreshtoken", refresh_token, {
+      httpOnly: true,
+      path: "/api/refresh_token",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
 
-      //creating access token
-      const access_token = createAccessToken({ id: user._id });
-      // creating refresh token
-      const refresh_token = createRefreshToken({ id: user._id });
-
-      res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
-
-      res.cookie("refreshtoken", refresh_token, {
-        httpOnly: true,
-        path: "/api/refresh_token",
-        maxAge: 30 * 24 * 60 * 60 * 1000, //30days
-      });
-
-      res.status(200).json({
-        msg: "Login Success!",
-        access_token,
-        refresh_token,
-        user: {
-          ...user._doc,
-          password: "",
-        },
-      });
-    } catch (err) {
-      return res.status(500).json({ msg: err.message });
+      // Send success response
+    return res.status(200).json({
+      success: true,
+      access_token,
+      refresh_token,
+      user: {
+        ...user._doc,
+        password: undefined, // Don't send password in response
+      },
+    });
+    } catch (error) {
+      next(error); // Pass error to global error handler
     }
   },
 
   logout: async (req, res, next) => {
+    
     try {
       res.clearCookie("refreshtoken", { path: "/api/refresh_token" });
-      return res.json({ msg: "Logged out!" });
+      return res.json({ message: "Logged out!" });
     } catch (err) {
       return res.status(500).json({ msg: err.message });
     }
@@ -726,7 +715,7 @@ const authCtrl = {
       await verificationToken.save();
       //sending mail
       mailTransport().sendMail({
-        form: "suberDesignVerification@suberDesign.com",
+        form: "suberCraftexVerification@suberCraftex.com",
         to: user.email,
         subject: "Verify your email account(new code)",
         html: generateEmailTemplate(OTP),
@@ -780,7 +769,7 @@ const authCtrl = {
       const resetToken = await ResetToken.findOneAndRemove({ owner: user._id });
 
       mailTransport().sendMail({
-        form: "suberDesignSecurity@suberDesign.com",
+        form: "suberCraftexSecurity@suberCraftex.com",
         to: user.email,
         subject: "Password Reset Successfully",
         html: generatePasswordResetTemplateSuccess(
@@ -861,7 +850,7 @@ const authCtrl = {
       });
 
       mailTransport().sendMail({
-        form: "suberDesignSecurity@suberDesign.com",
+        form: "suberCraftexSecurity@suberCraftex.com",
         to: user.email,
         subject: "Password Reset Successfully",
         html: generatePasswordResetTemplateSuccess(
