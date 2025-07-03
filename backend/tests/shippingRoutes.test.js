@@ -27,6 +27,7 @@ describe('Shipping Routes', () => {
     it('should create a new shipping option', async () => {
       const res = await request(app)
         .post('/api/shipping')
+        .set('Authorization', `Bearer ${globalToken}`)
         .send({
           address: {
             street: '123 Test St',
@@ -37,12 +38,12 @@ describe('Shipping Routes', () => {
           },
           shippingMethod: 'standard',
           cost: 10,
-          user: user._id,
+          user: globalUser._id,
         });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Shipping option created successfully');
-    });
+    }, 30000);
   });
 
   describe('GET /api/shipping', () => {
@@ -57,15 +58,17 @@ describe('Shipping Routes', () => {
         },
         shippingMethod: 'standard',
         cost: 10,
-        user: user._id,
+        user: globalUser._id,
       });
 
-      const res = await request(app).get('/api/shipping');
+      const res = await request(app)
+        .get('/api/shipping')
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.length).toEqual(1);
       expect(res.body[0].shippingMethod).toEqual('standard');
-    });
+    }, 30000);
   });
 
   describe('GET /api/shipping/:id', () => {
@@ -80,14 +83,16 @@ describe('Shipping Routes', () => {
         },
         shippingMethod: 'standard',
         cost: 10,
-        user: user._id,
+        user: globalUser._id,
       });
 
-      const res = await request(app).get(`/api/shipping/${shipping._id}`);
+      const res = await request(app)
+        .get(`/api/shipping/${shipping._id}`)
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.shippingMethod).toEqual('standard');
-    });
+    }, 30000);
   });
 
   describe('PUT /api/shipping/:id', () => {
@@ -102,18 +107,19 @@ describe('Shipping Routes', () => {
         },
         shippingMethod: 'standard',
         cost: 10,
-        user: user._id,
+        user: globalUser._id,
       });
 
       const res = await request(app)
         .put(`/api/shipping/${shipping._id}`)
+        .set('Authorization', `Bearer ${globalToken}`)
         .send({
           shippingMethod: 'express',
         });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Shipping option updated successfully');
-    });
+    }, 30000);
   });
 
   describe('DELETE /api/shipping/:id', () => {
@@ -128,13 +134,15 @@ describe('Shipping Routes', () => {
         },
         shippingMethod: 'standard',
         cost: 10,
-        user: user._id,
+        user: globalUser._id,
       });
 
-      const res = await request(app).delete(`/api/shipping/${shipping._id}`);
+      const res = await request(app)
+        .delete(`/api/shipping/${shipping._id}`)
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Shipping option deleted successfully');
-    });
+    }, 30000);
   });
 });

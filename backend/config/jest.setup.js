@@ -8,10 +8,7 @@ let globalToken;
 let globalUser;
 
 beforeAll(async () => {
-  await mongoose.connect('mongodb+srv://subercraftex:subercraftexpass@cluster0.2a7nq.mongodb.net/ecommerce-test', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await mongoose.connect('mongodb+srv://subercraftex:subercraftexpass@cluster0.2a7nq.mongodb.net/ecommerce-test');
 
   // Create a test user and get a token
   const password = 'testpassword123';
@@ -46,3 +43,5 @@ afterEach(async () => {
 afterAll(async () => {
   await mongoose.connection.close();
 });
+
+module.exports = { globalToken, globalUser };

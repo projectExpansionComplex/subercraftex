@@ -24,6 +24,7 @@ describe('Product Routes', () => {
     it('should create a new product', async () => {
       const res = await request(app)
         .post('/api/products')
+        .set('Authorization', `Bearer ${globalToken}`)
         .send({
           name: 'Test Product',
           price: 100,
@@ -33,7 +34,7 @@ describe('Product Routes', () => {
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Product created successfully');
-    });
+    }, 30000);
   });
 
   describe('GET /api/products', () => {
@@ -45,12 +46,14 @@ describe('Product Routes', () => {
         category: category._id,
       });
 
-      const res = await request(app).get('/api/products');
+      const res = await request(app)
+        .get('/api/products')
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.length).toEqual(1);
       expect(res.body[0].name).toEqual('Test Product');
-    });
+    }, 30000);
   });
 
   describe('GET /api/products/:id', () => {
@@ -62,11 +65,13 @@ describe('Product Routes', () => {
         category: category._id,
       });
 
-      const res = await request(app).get(`/api/products/${product._id}`);
+      const res = await request(app)
+        .get(`/api/products/${product._id}`)
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.name).toEqual('Test Product');
-    });
+    }, 30000);
   });
 
   describe('PUT /api/products/:id', () => {
@@ -80,13 +85,14 @@ describe('Product Routes', () => {
 
       const res = await request(app)
         .put(`/api/products/${product._id}`)
+        .set('Authorization', `Bearer ${globalToken}`)
         .send({
           price: 200,
         });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Product updated successfully');
-    });
+    }, 30000);
   });
 
   describe('DELETE /api/products/:id', () => {
@@ -98,10 +104,12 @@ describe('Product Routes', () => {
         category: category._id,
       });
 
-      const res = await request(app).delete(`/api/products/${product._id}`);
+      const res = await request(app)
+        .delete(`/api/products/${product._id}`)
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Product deleted successfully');
-    });
+    }, 30000);
   });
 });

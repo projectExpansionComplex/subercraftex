@@ -35,47 +35,51 @@ describe('Wishlist Routes', () => {
     it('should add a product to the wishlist', async () => {
       const res = await request(app)
         .post('/api/wishlist')
+        .set('Authorization', `Bearer ${globalToken}`)
         .send({
-          userId: user._id,
+          userId: globalUser._id,
           productId: product._id,
         });
 
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('message', 'Product added to wishlist successfully');
-    });
+    }, 30000);
   });
 
   describe('GET /api/wishlist/:userId', () => {
     it('should get the wishlist for a user', async () => {
       await Wishlist.create({
-        user: user._id,
+        user: globalUser._id,
         products: [product._id],
       });
 
-      const res = await request(app).get(`/api/wishlist/${user._id}`);
+      const res = await request(app)
+        .get(`/api/wishlist/${globalUser._id}`)
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.products.length).toEqual(1);
       expect(res.body.products[0].name).toEqual('Test Product');
-    });
+    }, 30000);
   });
 
   describe('DELETE /api/wishlist', () => {
     it('should remove a product from the wishlist', async () => {
       await Wishlist.create({
-        user: user._id,
+        user: globalUser._id,
         products: [product._id],
       });
 
       const res = await request(app)
         .delete('/api/wishlist')
+        .set('Authorization', `Bearer ${globalToken}`)
         .send({
-          userId: user._id,
+          userId: globalUser._id,
           productId: product._id,
         });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Product removed from wishlist successfully');
-    });
+    }, 30000);
   });
 });

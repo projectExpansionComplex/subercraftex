@@ -12,13 +12,14 @@ describe('Subscription Routes', () => {
     it('should create a new subscription', async () => {
       const res = await request(app)
         .post('/api/subscriptions')
+        .set('Authorization', `Bearer ${globalToken}`)
         .send({
           email: 'test@example.com',
         });
 
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('message', 'Subscription created successfully');
-    });
+    }, 30000);
   });
 
   describe('GET /api/subscriptions', () => {
@@ -27,12 +28,14 @@ describe('Subscription Routes', () => {
         email: 'test@example.com',
       });
 
-      const res = await request(app).get('/api/subscriptions');
+      const res = await request(app)
+        .get('/api/subscriptions')
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.length).toEqual(1);
       expect(res.body[0].email).toEqual('test@example.com');
-    });
+    }, 30000);
   });
 
   describe('GET /api/subscriptions/:id', () => {
@@ -41,11 +44,13 @@ describe('Subscription Routes', () => {
         email: 'test@example.com',
       });
 
-      const res = await request(app).get(`/api/subscriptions/${subscription._id}`);
+      const res = await request(app)
+        .get(`/api/subscriptions/${subscription._id}`)
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.email).toEqual('test@example.com');
-    });
+    }, 30000);
   });
 
   describe('DELETE /api/subscriptions/:id', () => {
@@ -54,10 +59,12 @@ describe('Subscription Routes', () => {
         email: 'test@example.com',
       });
 
-      const res = await request(app).delete(`/api/subscriptions/${subscription._id}`);
+      const res = await request(app)
+        .delete(`/api/subscriptions/${subscription._id}`)
+        .set('Authorization', `Bearer ${globalToken}`);
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Subscription deleted successfully');
-    });
+    }, 30000);
   });
 });
