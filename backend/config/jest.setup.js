@@ -27,7 +27,7 @@ beforeAll(async () => {
   globalUser = await User.create({
     first_name: 'Test',
     last_name: 'User',
-    email: 'test@example.com',
+    email: `test${Date.now()}@example.com`,
     password: hashedPassword,
     user_type: 'individual',
     role: 'admin',
@@ -37,7 +37,7 @@ beforeAll(async () => {
   const res = await request(app)
     .post('/api/users/login')
     .send({
-      email: 'test@example.com',
+      email: globalUser.email,
       password: password,
     });
 
