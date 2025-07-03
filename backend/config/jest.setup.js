@@ -1,8 +1,10 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const request = require('supertest');
 const app = require('../src/server');
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
+const connectDB = require('./db');
 
 // Import all models for cleanup
 const Announcement = require('../models/Announcement');
@@ -19,7 +21,7 @@ let globalToken;
 let globalUser;
 
 beforeAll(async () => {
-  await mongoose.connect('mongodb+srv://subercraftex:subercraftexpass@cluster0.2a7nq.mongodb.net/ecommerce-test');
+  connectDB(); // Connect to the database using the same method as index.js
 
   // Create a test user and get a token
   const password = 'testpassword123';
@@ -30,7 +32,7 @@ beforeAll(async () => {
     email: `test${Date.now()}@example.com`,
     password: hashedPassword,
     user_type: 'individual',
-    role: 'admin',
+    role: 'superadmin',
     username: 'testuser' + Date.now(), // Ensure unique username
   });
 
@@ -40,21 +42,19 @@ beforeAll(async () => {
       email: globalUser.email,
       password: password,
     });
-
-  globalToken = res.body.token;
+ 
+  globalToken = res._body.access_token;
+ 
+  console.log('Global Token:', globalToken);
+  console.log('Global User:', globalUser);
 }, 60000);
 
 afterEach(async () => {
-  await User.deleteMany({});
-  await Announcement.deleteMany({});
-  await Category.deleteMany({});
-  await ComingSoon.deleteMany({});
-  await Coupon.deleteMany({});
-  await Product.deleteMany({});
-  await Shipping.deleteMany({});
-  await Subscription.deleteMany({});
-  await Tag.deleteMany({});
-  await Wishlist.deleteMany({});
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    const collection = collections[key];
+    await collection.deleteMany();
+  }
 }, 60000);
 
 afterAll(async () => {
