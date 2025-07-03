@@ -30,7 +30,7 @@ beforeAll(async () => {
     });
 
   globalToken = res.body.token;
-});
+}, 60000);
 
 afterEach(async () => {
   const collections = mongoose.connection.collections;
@@ -38,10 +38,10 @@ afterEach(async () => {
     const collection = collections[key];
     await collection.deleteMany();
   }
-});
+}, 60000);
 
 afterAll(async () => {
   await mongoose.connection.close();
-});
+}, 60000);
 
 module.exports = { globalToken, globalUser };
