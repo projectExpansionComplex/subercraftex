@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../src/server');
 const Coupon = require('../models/discountAndCouponModel');
+const { globalToken } = require('../config/jest.setup');
 
 describe('Coupon Routes', () => {
   afterEach(async () => {

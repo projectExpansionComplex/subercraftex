@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../src/server');
 const Tag = require('../models/tagModel');
+const { globalToken } = require('../config/jest.setup');
 
 describe('Tag Routes', () => {
   afterEach(async () => {

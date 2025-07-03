@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../src/server');
 const Category = require('../models/categoryModel');
+const { globalToken } = require('../config/jest.setup');
 
 describe('Category Routes', () => {
   afterEach(async () => {

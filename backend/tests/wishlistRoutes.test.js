@@ -3,6 +3,7 @@ const app = require('../src/server');
 const Wishlist = require('../models/wishlistModel');
 const User = require('../models/userModel');
 const Product = require('../models/productModel');
+const { globalToken, globalUser } = require('../config/jest.setup');
 
 describe('Wishlist Routes', () => {
   let user;

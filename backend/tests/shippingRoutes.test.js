@@ -3,6 +3,7 @@ const app = require('../src/server');
 const Shipping = require('../models/shippingAndDeliveryModel');
 const User = require('../models/userModel');
 const mongoose = require('mongoose');
+const { globalToken, globalUser } = require('../config/jest.setup');
 
 describe('Shipping Routes', () => {
   let user;

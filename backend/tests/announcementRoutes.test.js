@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../src/server');
 const Announcement = require('../models/Announcement');
+const { globalToken } = require('../config/jest.setup');
 
 describe('Announcement Routes', () => {
   afterEach(async () => {
@@ -11,6 +12,7 @@ describe('Announcement Routes', () => {
     it('should create a new announcement', async () => {
       const res = await request(app)
         .post('/api/announcements')
+        .set('Authorization', `Bearer ${globalToken}`)
         .send({
           title: 'New Announcement',
           message: 'This is a test announcement.',

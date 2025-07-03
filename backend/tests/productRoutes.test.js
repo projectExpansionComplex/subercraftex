@@ -3,6 +3,7 @@ const app = require('../src/server');
 const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 const mongoose = require('mongoose');
+const { globalToken } = require('../config/jest.setup');
 
 describe('Product Routes', () => {
   let category;

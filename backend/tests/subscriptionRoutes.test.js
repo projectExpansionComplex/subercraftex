@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../src/server');
 const Subscription = require('../models/Subscription');
+const { globalToken } = require('../config/jest.setup');
 
 describe('Subscription Routes', () => {
   afterEach(async () => {
