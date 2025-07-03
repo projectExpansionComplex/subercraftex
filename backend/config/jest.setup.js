@@ -33,11 +33,15 @@ beforeAll(async () => {
 }, 60000);
 
 afterEach(async () => {
-  const collections = mongoose.connection.collections;
-  for (const key in collections) {
-    const collection = collections[key];
-    await collection.deleteMany();
-  }
+  await User.deleteMany({});
+  await Announcement.deleteMany({});
+  await Category.deleteMany({});
+  await Coupon.deleteMany({});
+  await Product.deleteMany({});
+  await Shipping.deleteMany({});
+  await Subscription.deleteMany({});
+  await Tag.deleteMany({});
+  await Wishlist.deleteMany({});
 }, 60000);
 
 afterAll(async () => {
