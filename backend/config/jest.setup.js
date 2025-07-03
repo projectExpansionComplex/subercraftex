@@ -1,19 +1,20 @@
 const mongoose = require('mongoose');
 
-// Connect to the test database before running tests
 beforeAll(async () => {
-  await mongoose.connect('mongodb://localhost:27017/ecommerce-test', {
+  await mongoose.connect('mongodb+srv://subercraftex:subercraftexpass@cluster0.2a7nq.mongodb.net/ecommerce-test', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
 });
 
-// Clean up the database after each test
 afterEach(async () => {
-  await mongoose.connection.db.dropDatabase();
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    const collection = collections[key];
+    await collection.deleteMany();
+  }
 });
 
-// Disconnect after all tests are done
 afterAll(async () => {
   await mongoose.connection.close();
 });

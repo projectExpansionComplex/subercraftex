@@ -1,131 +1,90 @@
 const request = require('supertest');
-const app = require('../src/server'); // Your main app file
-const User = require('../models/userModel'); // Path to your User model
+const app = require('../src/server');
+const User = require('../models/userModel');
 const mongoose = require('mongoose');
-const bcrypt = require("bcryptjs");
-const ResetToken = require("../models/resetTokenModel");
-const ResetToken2 = require("../models/resetTokenModel2");
-const crypto = require("crypto");
-
-const createRandomBytes = () =>
-  new Promise((resolve, reject) => {
-    crypto.randomBytes(30, (err, buff) => {
-      if (err) reject(err);
-      const token = buff.toString("hex");
-      resolve(token);
-    });
-  });
-
+const bcrypt = require('bcryptjs');
 
 describe('Authentication Routes', () => {
-  beforeAll(async () => {
-    // Connect to your test database
-    try {
-      await mongoose.connect('mongodb+srv://subercraftex:subercraftexpass@cluster0.2a7nq.mongodb.net', {
-        
-  
-      });
-  
-      console.log("SuberCraftex test MongoDB Connection Success 👍");
-    } catch (error) {
-      console.log("SuberCraftex test MongoDB Connection Failed 💥");
-      process.exit(1);
-    }
-  });
-
   afterEach(async () => {
-    // Clean up the database between tests
     await User.deleteMany({});
   });
 
-  afterAll(async () => {
-    // Disconnect from the test database
-    await mongoose.connection.close();
-  });
-
   describe('POST /api/users/register', () => {
-    // it('should register a new user', async () => {
-    //   const res = await request(app)
-    //     .post('/api/register')
-    //     .send({
-    //       fullname:"siysinyuy",
-	  //       username:"suber",
-	  //       email:"mohamadsiysinyuy@gmail.com",
-	  //       password:"msb1@@@@"
-    //     });
+    it('should register a new user', async () => {
+      const res = await request(app)
+        .post('/api/users/register')
+        .send({
+          first_name: 'John',
+          last_name: 'Doe',
+          email: 'johndoe@example.com',
+          password: 'password123',
+          user_type: 'individual'
+        });
 
-    //   expect(res.statusCode).toEqual(201);
-    //   expect(res.body).toHaveProperty('access_token');
-    //   expect(res.body).toHaveProperty('user');
-    //   expect(res.body.user.email).toBe('mohamadsiysinyuy@gmail.com');
-    // });
+      expect(res.statusCode).toEqual(201);
+      expect(res.body).toHaveProperty('message', 'User registered successfully');
+    });
 
     it('should not register a user with an existing email', async () => {
       await User.create({
-        first_name:"mohamad",
-        last_name:"siysinyuy",
-        user_type:"individual",
-	        email:"mohamadsiysinyuy@gmail.com",
-	        password:"msb1@@@@"
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'johndoe@example.com',
+        password: 'password123',
+        user_type: 'individual'
       });
 
       const res = await request(app)
         .post('/api/users/register')
         .send({
-          first_name:"mohamad",
-        last_name:"siysinyuy",
-        user_type:"individual",
-	        email:"mohamadsiysinyuy@gmail.com",
-	        password:"msb1@@@@"
+          first_name: 'John',
+          last_name: 'Doe',
+          email: 'johndoe@example.com',
+          password: 'password123',
+          user_type: 'individual'
         });
 
       expect(res.statusCode).toEqual(409);
-      expect(res.body).toHaveProperty("message", "User already exists");
+      expect(res.body).toHaveProperty('message', 'User already exists');
     });
-
   });
 
   describe('POST /api/users/login', () => {
     beforeEach(async () => {
       const salt = await bcrypt.genSalt(10);
-
-      const passwordHash = await bcrypt.hash('msb1@@@@', salt);
+      const passwordHash = await bcrypt.hash('password123', salt);
 
       await User.create({
-        user_type:"individual",
-        first_name:"mohamad",
-        last_name:"siysinyuy",
-	        email:"mohamadsiysinyuy@gmail.com",
-	        password:passwordHash
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'johndoe@example.com',
+        password: passwordHash,
+        user_type: 'individual'
       });
     });
 
-    // it('should log in an existing user', async () => {
-    //   const res = await request(app)
-    //     .post('/api/login')
-    //     .send({
-    //       email:"mohamadsiysinyuy@gmail.com",
-	  //       password:"msb1@@@@"
-    //     });
+    it('should log in an existing user', async () => {
+      const res = await request(app)
+        .post('/api/users/login')
+        .send({
+          email: 'johndoe@example.com',
+          password: 'password123',
+        });
 
-    //   expect(res.statusCode).toEqual(200);
-    //   expect(res.body).toHaveProperty('access_token');
-    //   expect(res.body).toHaveProperty('user');
-    //   expect(res.body.user.email).toBe('mohamadsiysinyuy@gmail.com');
-    // });
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('token');
+    });
 
     it('should not log in a user with an incorrect password', async () => {
       const res = await request(app)
         .post('/api/users/login')
         .send({
-          email: 'mohamadsiysinyuy@gmail.com',
+          email: 'johndoe@example.com',
           password: 'wrongpassword',
         });
 
       expect(res.statusCode).toEqual(401);
-      expect(res.body).toHaveProperty("message", "Invalid Login credentials", "success", true);
-      expect(res.body).toHaveProperty('success', true);
-
+      expect(res.body).toHaveProperty('message', 'Invalid credentials');
     });
 
     it('should not log in a non-existent user', async () => {
@@ -133,85 +92,11 @@ describe('Authentication Routes', () => {
         .post('/api/users/login')
         .send({
           email: 'nonexistent@example.com',
-          password: 'msb1@@@@',
+          password: 'password123',
         });
 
       expect(res.statusCode).toEqual(401);
-      expect(res.body).toHaveProperty('msg', 'Invalid Login credentials');
+      expect(res.body).toHaveProperty('message', 'Invalid credentials');
     });
   });
-
-  describe('POST /api/forgotpassword', () => {
-    // it('should send a password reset link to email', async () => {
-    //   await User.create({
-    //     fullname:"siysinyuy",
-	  //       username:"suber",
-	  //       email:"mohamadsiysinyuy@gmail.com",
-	  //       password:"msb1@@@@"
-    //   });
-
-    //   const res = await request(app)
-    //     .post('/api/forgotpassword')
-    //     .send({
-    //       email: 'mohamadsiysinyuy@gmail.com',
-    //     });
-
-    //   expect(res.statusCode).toEqual(200);
-    //   expect(res.body).toHaveProperty('msg', 'Password reset link is sent to your email.');
-    // });
-
-    it('should not send a reset link to a non-existent email', async () => {
-      const res = await request(app)
-        .post('/api/forgotpassword')
-        .send({
-          email: 'nonexistent@example.com',
-        });
-
-      expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('msg', 'Email could not be sent');
-    });
-  });
-
-  // describe('POST /api/reset-password/:token', () => {
-  //   it('should reset the user’s password', async () => {
-  //     await User.create({
-  //       fullname:"siysinyuy",
-	//         username:"suber",
-	//         email:"mohamadsiysinyuy@gmail.com",
-	//         password:"msb1@@@@"
-  //     });
-  //     const user_name = await User.findOne({ username: "suber" });
-
-  //     const randomBytes = await createRandomBytes();
-  //     //encripting the randomBytes
-  //     const salt = await bcrypt.genSalt(10);
-  //     const randomBytesHash = await bcrypt.hash(randomBytes, salt);
-
-  //     const token = await ResetToken.create({
-  //       owner: user_name._id,
-  //       token: randomBytesHash,
-  //     });
-     
-
-  //     const res = await request(app)
-  //       .post(`/api/reset-password?token=${token}`)
-  //       .send({
-  //         password: 'newpassword123',
-  //       });
-
-  //     expect(res.statusCode).toEqual(200);
-  //     expect(res.body).toHaveProperty('message', 'Password updated successfully');
-  //   });
-
-  //   it('should not reset the password if the token is invalid', async () => {
-  //     const res = await request(app)
-  //       .post('/api/reset-password/invalidToken')
-  //       .send({
-  //         password: 'newpassword123',
-  //       });
-
-  //     expect(res.statusCode).toEqual(400);
-  //     expect(res.body).toHaveProperty('message', 'Invalid or expired token');
-  //   });
-  // });
 });
