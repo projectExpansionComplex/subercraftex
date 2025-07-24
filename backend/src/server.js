@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express')
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -240,6 +241,5 @@ app.use('/api', require('../routes/authRouter'))
 
 // Use Error Handler
 app.use(globalErrorHandler);
-
 
 module.exports = app;
