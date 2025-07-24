@@ -45,7 +45,7 @@ const UserSchema = new mongoose.Schema({
     sparse: true, // Allows for unique but nullable values
   },
   fileName: String,
-  role:{type:String,default:'user', enum: ['admin', 'user']},
+  role:{type:String,default:'user', enum: ['admin', 'user','superadmin']},
   gender:{type:String,default:''},
   mobile:{type:String,default:''},
   address:{type:String,default:''},

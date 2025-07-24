@@ -53,7 +53,7 @@ const jwt = require('jsonwebtoken')
 
   // Middleware to authenticate user via JWT
   exports.auth = async (req, res, next)=>{
-    
+   
     try {
       const token = req.header('Authorization')
       if(!token){
@@ -62,7 +62,14 @@ const jwt = require('jsonwebtoken')
       } 
 
   // Verify the token
-      const decoded_token = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+      let decoded_token;
+      try {
+        decoded_token = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+      } catch (error) {
+        res.status(403).json({msg:"Invalid Authentication"})
+        return next(new ErrorResponse("Invalid Authentication", 403))
+      }
+      
       if(!decoded_token){
         res.status(403).json({msg:"Invalid Authentication"})
         return next(new ErrorResponse("Invalid Authentication", 403))
@@ -86,6 +93,7 @@ const jwt = require('jsonwebtoken')
   // Middleware to authorize user based on role
   exports.authorize = (...roles) => {
     return (req, res, next) => {
+
       if(!roles.includes(req.user.role)) {
         return next(
           new ErrorResponse('You do not have permission perform this action', 403)
