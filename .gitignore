@@ -1,0 +1,10 @@
+# Local Development
+postgres_data/
+minio_data/
+
+# Node
+node_modules/
+npm-debug.log
+
+# OS
+.DS_Store
